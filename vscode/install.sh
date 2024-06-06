@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Define VSCode download URL and filename for Apple Silicon (ARM64)
 VSCODE_URL="https://update.code.visualstudio.com/latest/darwin-arm64/stable"
@@ -60,5 +60,8 @@ else
   echo "'code' command is not available. Please check your PATH settings and try again."
 fi
 
-echo "Visual Studio Code installation is complete. Please run 'configure_vscode.sh' to set up configurations and extensions."
+# Execute fix_vscode_fonts.sh script
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+"$SCRIPT_DIR/fix_vscode_fonts.sh"
 
+echo "Visual Studio Code installation is complete. Please run 'configure_vscode.sh' to set up configurations and extensions."
