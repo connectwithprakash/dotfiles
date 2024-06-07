@@ -46,7 +46,7 @@ fi
 
 # Copy zsh_history
 echo "Copying zsh_history from $DOTFILES_ZSH_DIR to $HOME..."
-cp "$DOTFILES_ZSH_DIR/zsh_history" "$HOME/.zsh_history"
+cp "$DOTFILES_ZSH_DIR/.zsh_history" "$HOME/.zsh_history"
 
 # Install Powerlevel10k theme if not already installed
 if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
