@@ -44,14 +44,17 @@ show_diff() {
   local home_file=".${file#*.}"  # Remove "zsh/" prefix from file for home path
   local home_path="$HOME/$home_file"
 
-  echo "Differences in dotfile: $home_file"  # Use modified file name for home path
-  echo "---------------------------------"
-  echo "File path in dotfiles repo: $repo_path"
-  echo "File path in home directory: $home_path"
-  echo ""
-
-  diff -u "$home_path" "$repo_path"
-  echo ""
+  # Check if files are different
+  if ! diff -q "$home_path" "$repo_path" >/dev/null; then
+    echo "Differences in dotfile: $home_file"  # Use modified file name for home path
+    echo "---------------------------------"
+    echo "File path in dotfiles repo: $repo_path"
+    echo "File path in home directory: $home_path"
+    echo ""
+    
+    diff -u "$home_path" "$repo_path"
+    echo ""
+  fi
 }
 
 # Function to sync files from repo to home directory
