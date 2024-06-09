@@ -1,62 +1,119 @@
 #!/bin/bash
 
-DOTFILES_DIR=$(dirname "$(realpath "$0")")
-ZSH_DIR="$DOTFILES_DIR/zsh"
-DOTFILES=("$HOME/.zshrc" "$HOME/.p10k.zsh" "$HOME/.zsh_history" "$HOME/.aliases" "$HOME/.bash_profile" "$HOME/.gitconfig" "$HOME/.gitignore" "$HOME/.vimrc")
+# Define root directory where update_dotfiles.sh script resides
+ROOT_DIR=$(dirname "$(realpath "$0")")
 
-compare_files() {
-  local file1="$1"
-  local file2="$2"
-  if ! diff "$file1" "$file2" &>/dev/null; then
-    return 1
-  else
-    return 0
-  fi
+# Ensure root directory exists
+if [ ! -d "$ROOT_DIR" ]; then
+  echo "Root directory '$ROOT_DIR' not found."
+  exit 1
+fi
+
+# Function to prompt user with yes/no question
+prompt_yes_no() {
+  while true; do
+    read -p "$1 (y/n): " yn
+    case $yn in
+      [Yy]* ) return 0;;  # User answered yes
+      [Nn]* ) return 1;;  # User answered no
+      * ) echo "Please answer yes or no.";;
+    esac
+  done
 }
 
-update_required=false
-for file in "${DOTFILES[@]}"; do
-  filename=$(basename "$file")
-  if [[ "$filename" == .zshrc || "$filename" == .p10k.zsh || "$filename" == .zsh_history ]]; then
-    dotfile="$ZSH_DIR/$filename"
-  else
-    dotfile="$DOTFILES_DIR/$filename"
-  fi
+# List dot files in the project structure
+dotfiles=(
+  ".aliases"
+  ".bash_profile"
+  ".gitconfig"
+  ".gitignore"
+  ".vimrc"
+)
 
-  if [ -f "$dotfile" ]; then
-    if ! compare_files "$file" "$dotfile"; then
-      echo "Update available for $filename."
-      update_required=true
-    fi
-  else
-    echo "$filename is not in the dotfiles repository."
-    update_required=true
-  fi
-done
+# Additional dot files inside zsh directory with their relative paths
+zsh_dotfiles=(
+  "zsh/.p10k.zsh"
+  "zsh/.zsh_history"
+  "zsh/.zshrc"
+)
 
-if $update_required; then
-  read -p "Do you want to update the dotfiles in the repository? (y/n): " answer
-  case $answer in
-    [Yy]* )
-      for file in "${DOTFILES[@]}"; do
-        filename=$(basename "$file")
-        if [[ "$filename" == .zshrc || "$filename" == .p10k.zsh || "$filename" == .zsh_history ]]; then
-          dotfile="$ZSH_DIR/$filename"
-        else
-          dotfile="$DOTFILES_DIR/$filename"
-        fi
-        echo "Updating $filename in the repository..."
-        cp "$file" "$dotfile"
-      done
-      echo "Dotfiles updated in the repository."
-      ;;
-    [Nn]* )
-      echo "No updates were made to the repository."
-      ;;
-    * )
-      echo "Invalid input. No updates were made to the repository."
-      ;;
-  esac
+# Function to show differences in files
+show_diff() {
+  local file=$1
+  local repo_path="$ROOT_DIR/$file"
+  local home_file=".${file#*.}"  # Remove "zsh/" prefix from file for home path
+  local home_path="$HOME/$home_file"
+
+  echo "Differences in dotfile: $home_file"  # Use modified file name for home path
+  echo "---------------------------------"
+  echo "File path in dotfiles repo: $repo_path"
+  echo "File path in home directory: $home_path"
+  echo ""
+
+  diff -u "$home_path" "$repo_path"
+  echo ""
+}
+
+# Function to sync files from repo to home directory
+sync_to_home() {
+  local file=$1
+  local repo_path="$ROOT_DIR/$file"
+  local home_file=".${file#*.}"  # Remove "zsh/" prefix from file for home path
+  local home_path="$HOME/$home_file"
+
+  mkdir -p "$(dirname "$home_path")"
+  cp "$repo_path" "$home_path"
+  echo "Synced $home_file from dotfiles repository to home directory."
+}
+
+# Function to sync files from home directory to repo
+sync_to_repo() {
+  local file=$1
+  local repo_path="$ROOT_DIR/$file"
+  local home_file=".${file#*.}"  # Remove "zsh/" prefix from file for home path
+  local home_path="$HOME/$home_file"
+
+  mkdir -p "$(dirname "$repo_path")"
+  cp "$home_path" "$repo_path"
+  echo "Synced $home_file from home directory to dotfiles repository."
+}
+
+# Prompt user if they want to see the changes before syncing
+if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
+  # Show differences for dotfiles in root directory
+  for file in "${dotfiles[@]}"; do
+    show_diff "$file"
+  done
+
+  # Show differences for dotfiles in zsh directory
+  for file in "${zsh_dotfiles[@]}"; do
+    show_diff "$file"
+  done
+
+  # Prompt user to confirm sync
+  if prompt_yes_no "Do you want to sync dotfiles?"; then
+    # Sync dotfiles in both directions
+    for file in "${dotfiles[@]}"; do
+      sync_to_home "$file"
+    done
+
+    for file in "${zsh_dotfiles[@]}"; do
+      sync_to_home "$file"
+    done
+
+    echo "Dotfiles synced successfully."
+  else
+    echo "Sync aborted."
+  fi
 else
-  echo "No updates are required."
+  # Sync dotfiles without showing differences
+  for file in "${dotfiles[@]}"; do
+    sync_to_home "$file"
+  done
+
+  for file in "${zsh_dotfiles[@]}"; do
+    sync_to_home "$file"
+  done
+
+  echo "Dotfiles synced successfully."
 fi
