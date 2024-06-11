@@ -65,27 +65,76 @@ sync_to_repo() {
   local home_path="$HOME/$home_file"
 
   if [ -f "$home_path" ]; then
-    mkdir -p "$(dirname "$repo_path")"
-    cp "$home_path" "$repo_path"
-    echo "Synced $home_file from home directory ($home_path) to dotfiles repository ($repo_path)."
+    if ! diff -q "$home_path" "$repo_path" >/dev/null; then
+      mkdir -p "$(dirname "$repo_path")"
+      cp "$home_path" "$repo_path"
+      echo "Synced $home_file from home directory ($home_path) to dotfiles repository ($repo_path)."
+    else
+      echo "No changes detected in $home_file. Skipping sync."
+    fi
   fi
 }
 
-# Prompt user if they want to see the changes before syncing
-if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
-  # Show differences for dotfiles in root directory
-  for file in "${dotfiles[@]}"; do
-    show_diff "$file"
-  done
+# Function to sync files from repo to home directory
+sync_to_home() {
+  local file=$1
+  local repo_path="$ROOT_DIR/$file"
+  local home_file=".${file#*.}"  # Remove "zsh/" prefix from file for home path
+  local home_path="$HOME/$home_file"
 
-  # Show differences for dotfiles in zsh directory
-  for file in "${zsh_dotfiles[@]}"; do
-    show_diff "$file"
-  done
+  if [ -f "$repo_path" ]; then
+    if ! diff -q "$home_path" "$repo_path" >/dev/null; then
+      cp "$repo_path" "$home_path"
+      echo "Synced $home_file from dotfiles repository ($repo_path) to home directory ($home_path)."
+    else
+      echo "No changes detected in $home_file. Skipping sync."
+    fi
+  fi
+}
 
-  # Prompt user to confirm sync
-  if prompt_yes_no "Do you want to sync dotfiles?"; then
-    # Sync dotfiles from home directory to repo
+# Function to prompt user for sync direction
+prompt_sync_direction() {
+  while true; do
+    read -p "Do you want to sync dotfiles from home to repository or repository to home? (h/r): " direction
+    case $direction in
+      [Hh]* ) sync_home_to_repo; break;;
+      [Rr]* ) sync_repo_to_home; break;;
+      * ) echo "Please choose 'h' for home to repo or 'r' for repo to home.";;
+    esac
+  done
+}
+
+# Sync dotfiles from home directory to repository
+sync_home_to_repo() {
+  # Prompt user if they want to see the changes before syncing
+  if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
+    # Show differences for dotfiles in root directory
+    for file in "${dotfiles[@]}"; do
+      show_diff "$file"
+    done
+
+    # Show differences for dotfiles in zsh directory
+    for file in "${zsh_dotfiles[@]}"; do
+      show_diff "$file"
+    done
+
+    # Prompt user to confirm sync
+    if prompt_yes_no "Do you want to sync dotfiles?"; then
+      # Sync dotfiles from home directory to repo
+      for file in "${dotfiles[@]}"; do
+        sync_to_repo "$file"
+      done
+
+      for file in "${zsh_dotfiles[@]}"; do
+        sync_to_repo "$file"
+      done
+
+      echo "Dotfiles synced successfully to repository."
+    else
+      echo "Sync aborted."
+    fi
+  else
+    # Sync dotfiles without showing differences
     for file in "${dotfiles[@]}"; do
       sync_to_repo "$file"
     done
@@ -95,18 +144,53 @@ if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
     done
 
     echo "Dotfiles synced successfully to repository."
-  else
-    echo "Sync aborted."
   fi
-else
-  # Sync dotfiles without showing differences
-  for file in "${dotfiles[@]}"; do
-    sync_to_repo "$file"
-  done
+}
 
-  for file in "${zsh_dotfiles[@]}"; do
-    sync_to_repo "$file"
-  done
+# Sync dotfiles from repository to home directory
+sync_repo_to_home() {
+  # Prompt user if they want to see the changes before syncing
+  if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
+    # Show differences for dotfiles in root directory
+    for file in "${dotfiles[@]}"; do
+      show_diff "$file"
+    done
 
-  echo "Dotfiles synced successfully to repository."
-fi
+    # Show differences for dotfiles in zsh directory
+    for file in "${zsh_dotfiles[@]}"; do
+      show_diff "$file"
+    done
+
+    # Prompt user to confirm sync
+    if prompt_yes_no "Do you want to sync dotfiles?"; then
+      # Sync dotfiles from repo to home directory
+      for file in "${dotfiles[@]}"; do
+        sync_to_home "$file"
+      done
+
+      for file in "${zsh_dotfiles[@]}"; do
+        sync_to_home "$file"
+      done
+
+      echo "Dotfiles synced successfully to home directory."
+    else
+      echo "Sync aborted."
+    fi
+  else
+    # Sync dotfiles without showing differences
+    for file in "${dotfiles[@]}"; do
+      sync_to_home "$file"
+    done
+
+    for file in "${zsh_dotfiles[@]}"; do
+      sync_to_home "$file"
+    done
+
+    echo "Dotfiles synced successfully to home directory."
+  fi
+}
+
+# Main script starts here
+
+# Prompt user for sync direction
+prompt_sync_direction
