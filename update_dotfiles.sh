@@ -48,26 +48,12 @@ show_diff() {
   if ! diff -q "$home_path" "$repo_path" >/dev/null; then
     echo "Differences in dotfile: $home_file"  # Use modified file name for home path
     echo "---------------------------------"
-    echo "File path in dotfiles repo: $repo_path"
     echo "File path in home directory: $home_path"
+    echo "File path in dotfiles repo: $repo_path"
     echo ""
-    
+
     diff -u "$home_path" "$repo_path"
     echo ""
-  fi
-}
-
-# Function to sync files from repo to home directory
-sync_to_home() {
-  local file=$1
-  local repo_path="$ROOT_DIR/$file"
-  local home_file=".${file#*.}"  # Remove "zsh/" prefix from file for home path
-  local home_path="$HOME/$home_file"
-
-  mkdir -p "$(dirname "$home_path")"
-  cp "$repo_path" "$home_path"
-  if [ "$file" == "zsh/.zsh_history" ]; then
-    echo "Synced $home_file from dotfiles repository to home directory."
   fi
 }
 
@@ -78,9 +64,11 @@ sync_to_repo() {
   local home_file=".${file#*.}"  # Remove "zsh/" prefix from file for home path
   local home_path="$HOME/$home_file"
 
-  mkdir -p "$(dirname "$repo_path")"
-  cp "$home_path" "$repo_path"
-  echo "Synced $home_file from home directory to dotfiles repository."
+  if [ -f "$home_path" ]; then
+    mkdir -p "$(dirname "$repo_path")"
+    cp "$home_path" "$repo_path"
+    echo "Synced $home_file from home directory ($home_path) to dotfiles repository ($repo_path)."
+  fi
 }
 
 # Prompt user if they want to see the changes before syncing
@@ -97,28 +85,28 @@ if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
 
   # Prompt user to confirm sync
   if prompt_yes_no "Do you want to sync dotfiles?"; then
-    # Sync dotfiles in both directions
+    # Sync dotfiles from home directory to repo
     for file in "${dotfiles[@]}"; do
-      sync_to_home "$file"
+      sync_to_repo "$file"
     done
 
     for file in "${zsh_dotfiles[@]}"; do
-      sync_to_home "$file"
+      sync_to_repo "$file"
     done
 
-    echo "Dotfiles synced successfully."
+    echo "Dotfiles synced successfully to repository."
   else
     echo "Sync aborted."
   fi
 else
   # Sync dotfiles without showing differences
   for file in "${dotfiles[@]}"; do
-    sync_to_home "$file"
+    sync_to_repo "$file"
   done
 
   for file in "${zsh_dotfiles[@]}"; do
-    sync_to_home "$file"
+    sync_to_repo "$file"
   done
 
-  echo "Dotfiles synced successfully."
+  echo "Dotfiles synced successfully to repository."
 fi
