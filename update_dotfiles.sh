@@ -66,7 +66,9 @@ sync_to_home() {
 
   mkdir -p "$(dirname "$home_path")"
   cp "$repo_path" "$home_path"
-  echo "Synced $home_file from dotfiles repository to home directory."
+  if [ "$file" == "zsh/.zsh_history" ]; then
+    echo "Synced $home_file from dotfiles repository to home directory."
+  fi
 }
 
 # Function to sync files from home directory to repo
