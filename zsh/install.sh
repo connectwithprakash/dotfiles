@@ -8,10 +8,24 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Function to install packages based on OS
+install_package() {
+  local package=$1
+  if command_exists brew; then
+    brew install "$package"
+  elif command_exists apt-get; then
+    sudo apt-get update
+    sudo apt-get install -y "$package"
+  else
+    echo "Package manager not supported. Please install $package manually."
+    exit 1
+  fi
+}
+
 # Install Zsh if not already installed
 if ! command_exists zsh; then
   echo "Installing Zsh..."
-  brew install zsh  # Adjust based on your package manager if not using Homebrew
+  install_package zsh
 else
   echo "Zsh is already installed."
 fi
@@ -19,7 +33,7 @@ fi
 # Set Zsh as the default shell
 if [ "$SHELL" != "/bin/zsh" ]; then
   echo "Changing the default shell to Zsh..."
-  chsh -s /bin/zsh $USER
+  chsh -s /bin/zsh "$USER"
 else
   echo "Default shell is already Zsh."
 fi
@@ -36,7 +50,7 @@ fi
 echo "Copying .zshrc from $DOTFILES_ZSH_DIR to $HOME..."
 cp "$DOTFILES_ZSH_DIR/.zshrc" "$HOME/.zshrc"
 
-# Copy .p10k.zsh
+# Copy .p10k.zsh if it exists
 if [ -f "$DOTFILES_ZSH_DIR/.p10k.zsh" ]; then
   echo "Copying .p10k.zsh from $DOTFILES_ZSH_DIR to $HOME..."
   cp "$DOTFILES_ZSH_DIR/.p10k.zsh" "$HOME/.p10k.zsh"
@@ -44,9 +58,13 @@ else
   echo ".p10k.zsh not found in $DOTFILES_ZSH_DIR. Skipping copy."
 fi
 
-# Copy zsh_history
-echo "Copying zsh_history from $DOTFILES_ZSH_DIR to $HOME..."
-cp "$DOTFILES_ZSH_DIR/.zsh_history" "$HOME/.zsh_history"
+# Copy zsh_history if it exists
+if [ -f "$DOTFILES_ZSH_DIR/.zsh_history" ]; then
+  echo "Copying zsh_history from $DOTFILES_ZSH_DIR to $HOME..."
+  cp "$DOTFILES_ZSH_DIR/.zsh_history" "$HOME/.zsh_history"
+else
+  echo ".zsh_history not found in $DOTFILES_ZSH_DIR. Skipping copy."
+fi
 
 # Install Powerlevel10k theme if not already installed
 if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
