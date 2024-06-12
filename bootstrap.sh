@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 # Change directory to the location of the script
-cd "$(dirname "${BASH_SOURCE[0]}")";
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # Update from remote repository
-git pull origin main;
+git pull origin main
 
 # Function to sync dotfiles
 function syncDotfiles() {
@@ -14,8 +14,22 @@ function syncDotfiles() {
     --exclude "bootstrap.sh" \
     --exclude "README.md" \
     --exclude "LICENSE-MIT.txt" \
-    -avh --no-perms . ~;
-  source ~/.bash_profile;
+    -avh --no-perms . ~
+  source ~/.bash_profile
+}
+
+# Function to install dependencies
+function installDependencies() {
+  # Dotfiles directory
+  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  # Run install_dependencies.sh script if it exists
+  if [ -f "$DOTFILES_DIR/scripts/install_dependencies.sh" ]; then
+    echo "Running install_dependencies.sh..."
+    "$DOTFILES_DIR/scripts/install_dependencies.sh"
+  else
+    echo "scripts/install_dependencies.sh not found. Skipping dependency installation."
+  fi
 }
 
 # Function to install zsh configurations
@@ -48,19 +62,22 @@ function installVSCode() {
 
 # Main execution logic
 if [ "$1" = "--force" -o "$1" = "-f" ]; then
-  syncDotfiles;
-  installZsh;
-  installVSCode;
+  installDependencies
+  syncDotfiles
+  installZsh
+  installVSCode
 else
-  read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1;
-  echo "";
+  read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1
+  echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    syncDotfiles;
-    installZsh;
-    installVSCode;
-  fi;
-fi;
+    installDependencies
+    syncDotfiles
+    installZsh
+    installVSCode
+  fi
+fi
 
-unset syncDotfiles;
-unset installZsh;
-unset installVSCode;
+unset syncDotfiles
+unset installDependencies
+unset installZsh
+unset installVSCode
