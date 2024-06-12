@@ -22,6 +22,17 @@ install_package() {
   fi
 }
 
+# Function to set Zsh as the default shell in .bashrc
+set_zsh_in_bashrc() {
+  local bashrc_file="$HOME/.bashrc"
+  if ! grep -q "exec zsh" "$bashrc_file"; then
+    echo "exec zsh" >> "$bashrc_file"
+    echo "Added 'exec zsh' to $bashrc_file"
+  else
+    echo "'exec zsh' is already present in $bashrc_file"
+  fi
+}
+
 # Install Zsh if not already installed
 if ! command_exists zsh; then
   echo "Installing Zsh..."
@@ -94,10 +105,8 @@ for plugin in "${plugins[@]}"; do
   fi
 done
 
-# Fix the .zshrc file (if necessary)
-# Adjust this section based on your specific requirements
-# For example, remove or customize according to your setup
-# sed -i '' 's/${XDG_CACHE_HOME:-$HOME\/.cache}\/p10k-instant-prompt-${(%):-%n}.zsh/${XDG_CACHE_HOME:-$HOME\/.cache}\/p10k-instant-prompt-${(%):-%n}.zsh/g' "$HOME/.zshrc"
+# Set Zsh as the default shell in .bashrc for VS Code
+set_zsh_in_bashrc
 
 # Print instructions for sourcing .zshrc
 echo "Zsh setup complete!"
