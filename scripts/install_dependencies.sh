@@ -16,6 +16,10 @@ install_with_brew() {
   if ! command_exists brew; then
     echo "Homebrew is not installed. Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo "# Setting Homebrew in the PATH" >> "$HOME/.bash_profile"
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.bash_profile"
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+    source "$HOME/.bash_profile"  # Source the updated profile
   fi
   echo "Installing dependencies using Homebrew..."
   brew install "$1"
