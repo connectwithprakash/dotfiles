@@ -3,6 +3,8 @@
 # Define a list of dependencies to check and install
 DEPENDENCIES=(
   "jq"
+  "tree"
+  "btop++"
   # Add more dependencies as needed
 )
 
