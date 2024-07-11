@@ -4,7 +4,7 @@
 DEPENDENCIES=(
   "jq"
   "tree"
-  "btop++"
+  "btop"
   # Add more dependencies as needed
 )
 
