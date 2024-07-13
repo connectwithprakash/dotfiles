@@ -5,6 +5,8 @@ DEPENDENCIES=(
   "jq"
   "tree"
   "btop"
+  "tmux"
+  "stats"
   # Add more dependencies as needed
 )
 
