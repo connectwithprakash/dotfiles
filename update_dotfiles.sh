@@ -33,7 +33,7 @@ dotfiles=(
 # Additional dot files inside zsh directory with their relative paths
 zsh_dotfiles=(
   "zsh/.p10k.zsh"
-  "zsh/.zsh_history"
+  # "zsh/.zsh_history"
   "zsh/.zshrc"
 )
 
