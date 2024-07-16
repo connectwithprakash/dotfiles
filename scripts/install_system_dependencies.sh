@@ -7,6 +7,7 @@ SYSTEM_DEPENDENCIES=(
   "btop"
   "tmux"
   "stats"
+  "pipx"
   # Add more system dependencies as needed
 )
 
