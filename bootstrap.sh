@@ -25,17 +25,31 @@ function syncDotfiles() {
   fi
 }
 
-# Function to install dependencies only if not already installed
-function installDependencies() {
+# Function to install system dependencies only if not already installed
+function installSystemDependencies() {
   # Dotfiles directory
   DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-  # Run install_dependencies.sh script if it exists and is executable
-  if [ -f "$DOTFILES_DIR/scripts/install_dependencies.sh" ] && [ -x "$DOTFILES_DIR/scripts/install_dependencies.sh" ]; then
-    echo "Checking dependencies..."
-    "$DOTFILES_DIR/scripts/install_dependencies.sh"
+  # Run install_system_dependencies.sh script if it exists and is executable
+  if [ -f "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ] && [ -x "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ]; then
+    echo "Checking system dependencies..."
+    "$DOTFILES_DIR/scripts/install_system_dependencies.sh"
   else
-    echo "scripts/install_dependencies.sh not found or not executable. Skipping dependency installation."
+    echo "scripts/install_system_dependencies.sh not found or not executable. Skipping system dependency installation."
+  fi
+}
+
+# Function to install pipx-managed dependencies only if not already installed
+function installPipxDependencies() {
+  # Dotfiles directory
+  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  # Run install_pipx_dependencies.sh script if it exists and is executable
+  if [ -f "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ] && [ -x "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ]; then
+    echo "Checking pipx dependencies..."
+    "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh"
+  else
+    echo "scripts/install_pipx_dependencies.sh not found or not executable. Skipping pipx dependency installation."
   fi
 }
 
@@ -69,7 +83,8 @@ function installVSCode() {
 
 # Main execution logic
 if [ "$1" = "--force" -o "$1" = "-f" ]; then
-  installDependencies
+  installSystemDependencies
+  installPipxDependencies
   syncDotfiles
   installZsh
   installVSCode
@@ -77,7 +92,8 @@ else
   read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    installDependencies
+    installSystemDependencies
+    installPipxDependencies
     syncDotfiles
     installZsh
     installVSCode
@@ -86,6 +102,7 @@ fi
 
 # Unset functions to clean up the environment
 unset syncDotfiles
-unset installDependencies
+unset installSystemDependencies
+unset installPipxDependencies
 unset installZsh
 unset installVSCode
