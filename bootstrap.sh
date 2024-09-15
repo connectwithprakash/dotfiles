@@ -8,7 +8,7 @@ git pull origin main
 
 # Function to sync dotfiles only if there are changes
 function syncDotfiles() {
-  echo "Syncing dotfiles..."
+  echo "🔄 Syncing your dotfiles to ensure everything is up-to-date..."
   rsync_output=$(rsync --exclude ".git/" \
     --exclude ".DS_Store" \
     --exclude ".osx" \
@@ -18,10 +18,10 @@ function syncDotfiles() {
     -avh --no-perms . ~)
 
   if [ -n "$rsync_output" ]; then
-    echo "Dotfiles were updated. Sourcing .bash_profile..."
+    echo "✨ Dotfiles have been updated. Sourcing .bash_profile to apply changes..."
     source ~/.bash_profile
   else
-    echo "No changes in dotfiles. Skipping sourcing of .bash_profile."
+    echo "✅ No changes detected in dotfiles. Skipping sourcing of .bash_profile."
   fi
 }
 
@@ -32,10 +32,10 @@ function installSystemDependencies() {
 
   # Run install_system_dependencies.sh script if it exists and is executable
   if [ -f "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ] && [ -x "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ]; then
-    echo "Checking system dependencies..."
+    echo "🔍 Checking and installing necessary system dependencies..."
     "$DOTFILES_DIR/scripts/install_system_dependencies.sh"
   else
-    echo "scripts/install_system_dependencies.sh not found or not executable. Skipping system dependency installation."
+    echo "⚠️ System dependencies script not found or not executable. Skipping system dependency installation."
   fi
 }
 
@@ -46,24 +46,24 @@ function installPipxDependencies() {
 
   # Run install_pipx_dependencies.sh script if it exists and is executable
   if [ -f "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ] && [ -x "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ]; then
-    echo "Checking pipx dependencies..."
+    echo "📦 Checking and installing pipx-managed dependencies..."
     "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh"
   else
-    echo "scripts/install_pipx_dependencies.sh not found or not executable. Skipping pipx dependency installation."
+    echo "⚠️ Pipx dependencies script not found or not executable. Skipping pipx dependency installation."
   fi
 }
 
-# Function to install zsh configurations only if necessary
+# Function to install Zsh configurations only if necessary
 function installZsh() {
   # Dotfiles directory
   DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
   # Run zsh install script if it exists and is executable
   if [ -f "$DOTFILES_DIR/zsh/install.sh" ] && [ -x "$DOTFILES_DIR/zsh/install.sh" ]; then
-    echo "Installing Zsh configurations..."
+    echo "🔧 Installing Zsh configurations..."
     "$DOTFILES_DIR/zsh/install.sh"
   else
-    echo "zsh/install.sh not found or not executable. Skipping Zsh setup."
+    echo "⚠️ zsh/install.sh not found or not executable. Skipping Zsh setup."
   fi
 }
 
@@ -74,10 +74,10 @@ function installVSCode() {
 
   # Run vscode install script if it exists and is executable
   if [ -f "$DOTFILES_DIR/vscode/install.sh" ] && [ -x "$DOTFILES_DIR/vscode/install.sh" ]; then
-    echo "Installing VS Code configurations..."
+    echo "🖥️ Installing VS Code configurations..."
     "$DOTFILES_DIR/vscode/install.sh"
   else
-    echo "vscode/install.sh not found or not executable. Skipping VS Code setup."
+    echo "⚠️ vscode/install.sh not found or not executable. Skipping VS Code setup."
   fi
 }
 
@@ -88,10 +88,10 @@ function installNeovim() {
 
   # Run neovim install script if it exists and is executable
   if [ -f "$DOTFILES_DIR/neovim/install.sh" ] && [ -x "$DOTFILES_DIR/neovim/install.sh" ]; then
-    echo "Installing Neovim and its configurations..."
+    echo "📝 Installing Neovim and its configurations..."
     "$DOTFILES_DIR/neovim/install.sh"
   else
-    echo "neovim/install.sh not found or not executable. Skipping Neovim setup."
+    echo "⚠️ neovim/install.sh not found or not executable. Skipping Neovim setup."
   fi
 }
 
@@ -104,37 +104,37 @@ if [ "$1" = "--force" -o "$1" = "-f" ]; then
   installVSCode
   installNeovim
 else
-  read -p "Do you want to install system dependencies? (y/n) " -n 1
+  read -p "🔄 Do you want to install system dependencies? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     installSystemDependencies
   fi
 
-  read -p "Do you want to install pipx dependencies? (y/n) " -n 1
+  read -p "📦 Do you want to install pipx dependencies? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     installPipxDependencies
   fi
 
-  read -p "Do you want to sync dotfiles? (y/n) " -n 1
+  read -p "🔄 Do you want to sync your dotfiles? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     syncDotfiles
   fi
 
-  read -p "Do you want to install Zsh configurations? (y/n) " -n 1
+  read -p "🔧 Do you want to install Zsh configurations? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     installZsh
   fi
 
-  read -p "Do you want to install VS Code configurations? (y/n) " -n 1
+  read -p "🖥️ Do you want to install VS Code configurations? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     installVSCode
   fi
 
-  read -p "Do you want to install Neovim and its configurations? (y/n) " -n 1
+  read -p "📝 Do you want to install Neovim and its configurations? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     installNeovim
@@ -148,3 +148,5 @@ unset installPipxDependencies
 unset installZsh
 unset installVSCode
 unset installNeovim
+
+echo "🎉 All tasks completed! Your environment is now set up and ready to use."
