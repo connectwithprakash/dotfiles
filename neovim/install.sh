@@ -79,8 +79,10 @@ install_neovim_plugins() {
 
 # Set VIMRUNTIME environment variable
 set_vimruntime() {
-  # Use a dynamic approach to find the Neovim runtime path
-  VIMRUNTIME_PATH=$(nvim -e --cmd 'echo $VIMRUNTIME | q' 2>&1)
+  # Extract the version number from nvim --version output
+  VIM_VERSION=$(nvim --version | head -n 1 | awk '{print $2}' | sed 's/^v//')
+  # Set the VIMRUNTIME environment variable
+  VIMRUNTIME_PATH="/opt/homebrew/Cellar/neovim/${VIM_VERSION}/share/nvim/runtime"
 
   echo "🔍 Detected VIMRUNTIME path: $VIMRUNTIME_PATH"
 
@@ -93,6 +95,8 @@ set_vimruntime() {
         if ! grep -q "export VIMRUNTIME=" "$rc_file"; then
           echo "export VIMRUNTIME=\"$VIMRUNTIME_PATH\"" >> "$rc_file"
           echo "📄 Added VIMRUNTIME to $rc_file"
+        else
+          echo "✅ VIMRUNTIME already present in $rc_file"
         fi
       fi
     done

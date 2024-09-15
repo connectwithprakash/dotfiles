@@ -53,4 +53,4 @@ complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes Syste
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Add path for neovim 
-export VIMRUNTIME="/opt/homebrew/Cellar/neovim/$(nvim --version | head -n 1 | awk '{print $2}')/share/nvim/runtime"
+export VIMRUNTIME="/opt/homebrew/Cellar/neovim/$(nvim --version | head -n 1 | awk '{print $2}' | sed 's/^v//')/share/nvim/runtime"
