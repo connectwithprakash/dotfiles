@@ -40,6 +40,25 @@ install_vim_plug() {
   fi
 }
 
+# Copy init.vim to the Neovim configuration directory
+setup_init_vim() {
+  CONFIG_DIR="$HOME/.config/nvim"
+  INIT_VIM="$CONFIG_DIR/init.vim"
+  REPO_INIT_VIM="$(dirname "$0")/init.vim"
+
+  if [ ! -d "$CONFIG_DIR" ]; then
+    echo "Creating Neovim configuration directory..."
+    mkdir -p "$CONFIG_DIR"
+  fi
+
+  if [ -f "$REPO_INIT_VIM" ]; then
+    echo "Copying init.vim to Neovim configuration directory..."
+    cp "$REPO_INIT_VIM" "$INIT_VIM"
+  else
+    echo "⚠️ init.vim not found in the repository. Please ensure it exists in the neovim directory."
+  fi
+}
+
 # Install Neovim plugins
 install_neovim_plugins() {
   echo "Installing Neovim plugins..."
@@ -50,6 +69,7 @@ install_neovim_plugins() {
 install_brew
 install_neovim
 install_vim_plug
+setup_init_vim
 install_neovim_plugins
 
 echo "🎉 Neovim setup complete!"
