@@ -5,7 +5,7 @@ ROOT_DIR=$(dirname "$(realpath "$0")")
 
 # Ensure root directory exists
 if [ ! -d "$ROOT_DIR" ]; then
-  echo "Root directory '$ROOT_DIR' not found."
+  echo "❌ Root directory '$ROOT_DIR' not found."
   exit 1
 fi
 
@@ -16,7 +16,7 @@ prompt_yes_no() {
     case $yn in
       [Yy]* ) return 0;;  # User answered yes
       [Nn]* ) return 1;;  # User answered no
-      * ) echo "Please answer yes or no.";;
+      * ) echo "❗ Please answer yes or no.";;
     esac
   done
 }
@@ -46,10 +46,10 @@ show_diff() {
 
   # Check if files are different
   if ! diff -q "$home_path" "$repo_path" >/dev/null; then
-    echo "Differences in dotfile: $home_file"  # Use modified file name for home path
+    echo "🔍 Differences in dotfile: $home_file"
     echo "---------------------------------"
-    echo "File path in home directory: $home_path"
-    echo "File path in dotfiles repo: $repo_path"
+    echo "📂 File path in home directory: $home_path"
+    echo "📁 File path in dotfiles repo: $repo_path"
     echo ""
 
     diff -u "$home_path" "$repo_path"
@@ -68,9 +68,9 @@ sync_to_repo() {
     if ! diff -q "$home_path" "$repo_path" >/dev/null; then
       mkdir -p "$(dirname "$repo_path")"
       cp "$home_path" "$repo_path"
-      echo "Synced $home_file from home directory ($home_path) to dotfiles repository ($repo_path)."
+      echo "✅ Synced $home_file from home directory ($home_path) to dotfiles repository ($repo_path)."
     else
-      echo "No changes detected in $home_file. Skipping sync."
+      echo "⚠️ No changes detected in $home_file. Skipping sync."
     fi
   fi
 }
@@ -85,9 +85,9 @@ sync_to_home() {
   if [ -f "$repo_path" ]; then
     if ! diff -q "$home_path" "$repo_path" >/dev/null; then
       cp "$repo_path" "$home_path"
-      echo "Synced $home_file from dotfiles repository ($repo_path) to home directory ($home_path)."
+      echo "✅ Synced $home_file from dotfiles repository ($repo_path) to home directory ($home_path)."
     else
-      echo "No changes detected in $home_file. Skipping sync."
+      echo "⚠️ No changes detected in $home_file. Skipping sync."
     fi
   fi
 }
@@ -102,7 +102,7 @@ prompt_sync_direction() {
     case $direction in
       1 ) sync_home_to_repo; break;;
       2 ) sync_repo_to_home; break;;
-      * ) echo "Please choose '1' for Home to Repository or '2' for Repository to Home.";;
+      * ) echo "❗ Please choose '1' for Home to Repository or '2' for Repository to Home.";;
     esac
   done
 }
@@ -111,7 +111,7 @@ prompt_sync_direction() {
 prompt_select_dotfiles() {
   selected_dotfiles=()
   for file in "${dotfiles[@]}" "${zsh_dotfiles[@]}"; do
-    if prompt_yes_no "Do you want to sync $file?"; then
+    if prompt_yes_no "🔄 Do you want to sync $file?"; then
       selected_dotfiles+=("$file")
     fi
   done
@@ -123,22 +123,22 @@ sync_home_to_repo() {
   prompt_select_dotfiles
 
   # Prompt user if they want to see the changes before syncing
-  if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
+  if prompt_yes_no "👀 Do you want to see the changes before syncing dotfiles?"; then
     # Show differences for selected dotfiles
     for file in "${selected_dotfiles[@]}"; do
       show_diff "$file"
     done
 
     # Prompt user to confirm sync
-    if prompt_yes_no "Do you want to sync dotfiles?"; then
+    if prompt_yes_no "🔄 Do you want to sync dotfiles?"; then
       # Sync selected dotfiles from home directory to repo
       for file in "${selected_dotfiles[@]}"; do
         sync_to_repo "$file"
       done
 
-      echo "Dotfiles synced successfully to repository."
+      echo "🎉 Dotfiles synced successfully to repository."
     else
-      echo "Sync aborted."
+      echo "❌ Sync aborted."
     fi
   else
     # Sync selected dotfiles without showing differences
@@ -146,7 +146,7 @@ sync_home_to_repo() {
       sync_to_repo "$file"
     done
 
-    echo "Dotfiles synced successfully to repository."
+    echo "🎉 Dotfiles synced successfully to repository."
   fi
 }
 
@@ -156,22 +156,22 @@ sync_repo_to_home() {
   prompt_select_dotfiles
 
   # Prompt user if they want to see the changes before syncing
-  if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
+  if prompt_yes_no "👀 Do you want to see the changes before syncing dotfiles?"; then
     # Show differences for selected dotfiles
     for file in "${selected_dotfiles[@]}"; do
       show_diff "$file"
     done
 
     # Prompt user to confirm sync
-    if prompt_yes_no "Do you want to sync dotfiles?"; then
+    if prompt_yes_no "🔄 Do you want to sync dotfiles?"; then
       # Sync selected dotfiles from repo to home directory
       for file in "${selected_dotfiles[@]}"; do
         sync_to_home "$file"
       done
 
-      echo "Dotfiles synced successfully to home directory."
+      echo "🎉 Dotfiles synced successfully to home directory."
     else
-      echo "Sync aborted."
+      echo "❌ Sync aborted."
     fi
   else
     # Sync selected dotfiles without showing differences
@@ -179,7 +179,7 @@ sync_repo_to_home() {
       sync_to_home "$file"
     done
 
-    echo "Dotfiles synced successfully to home directory."
+    echo "🎉 Dotfiles synced successfully to home directory."
   fi
 }
 
