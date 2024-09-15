@@ -8,6 +8,7 @@ SYSTEM_DEPENDENCIES=(
   "tmux"
   "stats"
   "pipx"
+  "neovim"
   # Add more system dependencies as needed
 )
 
