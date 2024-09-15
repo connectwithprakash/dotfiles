@@ -104,28 +104,32 @@ prompt_sync_direction() {
   done
 }
 
+# Function to prompt user to select specific dotfiles
+prompt_select_dotfiles() {
+  selected_dotfiles=()
+  for file in "${dotfiles[@]}" "${zsh_dotfiles[@]}"; do
+    if prompt_yes_no "Do you want to sync $file?"; then
+      selected_dotfiles+=("$file")
+    fi
+  done
+}
+
 # Sync dotfiles from home directory to repository
 sync_home_to_repo() {
+  # Prompt user to select specific dotfiles
+  prompt_select_dotfiles
+
   # Prompt user if they want to see the changes before syncing
   if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
-    # Show differences for dotfiles in root directory
-    for file in "${dotfiles[@]}"; do
-      show_diff "$file"
-    done
-
-    # Show differences for dotfiles in zsh directory
-    for file in "${zsh_dotfiles[@]}"; do
+    # Show differences for selected dotfiles
+    for file in "${selected_dotfiles[@]}"; do
       show_diff "$file"
     done
 
     # Prompt user to confirm sync
     if prompt_yes_no "Do you want to sync dotfiles?"; then
-      # Sync dotfiles from home directory to repo
-      for file in "${dotfiles[@]}"; do
-        sync_to_repo "$file"
-      done
-
-      for file in "${zsh_dotfiles[@]}"; do
+      # Sync selected dotfiles from home directory to repo
+      for file in "${selected_dotfiles[@]}"; do
         sync_to_repo "$file"
       done
 
@@ -134,12 +138,8 @@ sync_home_to_repo() {
       echo "Sync aborted."
     fi
   else
-    # Sync dotfiles without showing differences
-    for file in "${dotfiles[@]}"; do
-      sync_to_repo "$file"
-    done
-
-    for file in "${zsh_dotfiles[@]}"; do
+    # Sync selected dotfiles without showing differences
+    for file in "${selected_dotfiles[@]}"; do
       sync_to_repo "$file"
     done
 
@@ -149,26 +149,20 @@ sync_home_to_repo() {
 
 # Sync dotfiles from repository to home directory
 sync_repo_to_home() {
+  # Prompt user to select specific dotfiles
+  prompt_select_dotfiles
+
   # Prompt user if they want to see the changes before syncing
   if prompt_yes_no "Do you want to see the changes before syncing dotfiles?"; then
-    # Show differences for dotfiles in root directory
-    for file in "${dotfiles[@]}"; do
-      show_diff "$file"
-    done
-
-    # Show differences for dotfiles in zsh directory
-    for file in "${zsh_dotfiles[@]}"; do
+    # Show differences for selected dotfiles
+    for file in "${selected_dotfiles[@]}"; do
       show_diff "$file"
     done
 
     # Prompt user to confirm sync
     if prompt_yes_no "Do you want to sync dotfiles?"; then
-      # Sync dotfiles from repo to home directory
-      for file in "${dotfiles[@]}"; do
-        sync_to_home "$file"
-      done
-
-      for file in "${zsh_dotfiles[@]}"; do
+      # Sync selected dotfiles from repo to home directory
+      for file in "${selected_dotfiles[@]}"; do
         sync_to_home "$file"
       done
 
@@ -177,12 +171,8 @@ sync_repo_to_home() {
       echo "Sync aborted."
     fi
   else
-    # Sync dotfiles without showing differences
-    for file in "${dotfiles[@]}"; do
-      sync_to_home "$file"
-    done
-
-    for file in "${zsh_dotfiles[@]}"; do
+    # Sync selected dotfiles without showing differences
+    for file in "${selected_dotfiles[@]}"; do
       sync_to_home "$file"
     done
 
