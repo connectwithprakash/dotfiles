@@ -1,5 +1,9 @@
+" Dynamically set runtimepath and packpath
+let &runtimepath = expand('$VIMRUNTIME') . ',' . &runtimepath
+let &packpath = &runtimepath
+
 " Specify a directory for plugins
-call plug#begin('~/.local/share/nvim/plugged')
+call plug#begin(stdpath('data') . '/plugged')
 
 " List of plugins
 Plug 'tpope/vim-sensible'
