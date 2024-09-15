@@ -94,12 +94,15 @@ sync_to_home() {
 
 # Function to prompt user for sync direction
 prompt_sync_direction() {
+  echo "🌟✨ Choose Your Sync Direction ✨🌟"
+  echo "1) Home to Repository 🏠➡️📁"
+  echo "2) Repository to Home 📁➡️🏠"
   while true; do
-    read -p "Do you want to sync dotfiles from home to repository or repository to home? (h/r): " direction
+    read -p "Enter your choice (1/2): " direction
     case $direction in
-      [Hh]* ) sync_home_to_repo; break;;
-      [Rr]* ) sync_repo_to_home; break;;
-      * ) echo "Please choose 'h' for home to repo or 'r' for repo to home.";;
+      1 ) sync_home_to_repo; break;;
+      2 ) sync_repo_to_home; break;;
+      * ) echo "Please choose '1' for Home to Repository or '2' for Repository to Home.";;
     esac
   done
 }
