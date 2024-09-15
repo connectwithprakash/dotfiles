@@ -81,6 +81,20 @@ function installVSCode() {
   fi
 }
 
+# Function to install Neovim and its configurations
+function installNeovim() {
+  # Dotfiles directory
+  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  # Run neovim install script if it exists and is executable
+  if [ -f "$DOTFILES_DIR/neovim/install.sh" ] && [ -x "$DOTFILES_DIR/neovim/install.sh" ]; then
+    echo "Installing Neovim and its configurations..."
+    "$DOTFILES_DIR/neovim/install.sh"
+  else
+    echo "neovim/install.sh not found or not executable. Skipping Neovim setup."
+  fi
+}
+
 # Main execution logic
 if [ "$1" = "--force" -o "$1" = "-f" ]; then
   installSystemDependencies
@@ -88,15 +102,42 @@ if [ "$1" = "--force" -o "$1" = "-f" ]; then
   syncDotfiles
   installZsh
   installVSCode
+  installNeovim
 else
-  read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1
+  read -p "Do you want to install system dependencies? (y/n) " -n 1
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     installSystemDependencies
+  fi
+
+  read -p "Do you want to install pipx dependencies? (y/n) " -n 1
+  echo ""
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
     installPipxDependencies
+  fi
+
+  read -p "Do you want to sync dotfiles? (y/n) " -n 1
+  echo ""
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
     syncDotfiles
+  fi
+
+  read -p "Do you want to install Zsh configurations? (y/n) " -n 1
+  echo ""
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
     installZsh
+  fi
+
+  read -p "Do you want to install VS Code configurations? (y/n) " -n 1
+  echo ""
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
     installVSCode
+  fi
+
+  read -p "Do you want to install Neovim and its configurations? (y/n) " -n 1
+  echo ""
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    installNeovim
   fi
 fi
 
@@ -106,3 +147,4 @@ unset installSystemDependencies
 unset installPipxDependencies
 unset installZsh
 unset installVSCode
+unset installNeovim
