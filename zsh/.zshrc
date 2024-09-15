@@ -116,3 +116,6 @@ source $ZSH/oh-my-zsh.sh
 # Export paths for apps
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 export PATH="$PATH:/opt/homebrew/bin"
+
+# Source aliases
+source ~/.aliases
