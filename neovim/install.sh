@@ -29,6 +29,16 @@ install_neovim() {
   fi
 }
 
+# Install Node.js
+install_node() {
+  if ! command_exists node; then
+    echo "Node.js is not installed. Installing Node.js..."
+    brew install node
+  else
+    echo "Node.js is already installed."
+  fi
+}
+
 # Install Vim-Plug for Neovim
 install_vim_plug() {
   if [ ! -f "$HOME/.local/share/nvim/site/autoload/plug.vim" ]; then
@@ -65,11 +75,36 @@ install_neovim_plugins() {
   nvim +PlugInstall +qall
 }
 
+# Set VIMRUNTIME environment variable if not already set
+set_vimruntime() {
+  if [ -z "$VIMRUNTIME" ]; then
+    VIM_VERSION=$(nvim --version | head -n 1 | awk '{print $2}')
+    export VIMRUNTIME="/opt/homebrew/Cellar/neovim/$VIM_VERSION/share/nvim/runtime"
+    
+    if ! grep -q 'export VIMRUNTIME=' "$HOME/.bash_profile"; then
+      echo "export VIMRUNTIME=\"$VIMRUNTIME\"" >> "$HOME/.bash_profile"
+      echo "📄 Added VIMRUNTIME to .bash_profile"
+    fi
+    
+    if ! grep -q 'export VIMRUNTIME=' "$HOME/.zshrc"; then
+      echo "export VIMRUNTIME=\"$VIMRUNTIME\"" >> "$HOME/.zshrc"
+      echo "📄 Added VIMRUNTIME to .zshrc"
+    fi
+    
+    source "$HOME/.bash_profile" || source "$HOME/.zshrc"
+    echo "✅ VIMRUNTIME set to $VIMRUNTIME"
+  else
+    echo "ℹ️ VIMRUNTIME is already set to $VIMRUNTIME"
+  fi
+}
+
 # Main function to install Neovim and plugins
 install_brew
 install_neovim
+install_node
 install_vim_plug
 setup_init_vim
 install_neovim_plugins
+set_vimruntime
 
 echo "🎉 Neovim setup complete!"

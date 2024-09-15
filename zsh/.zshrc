@@ -119,3 +119,6 @@ export PATH="$PATH:/opt/homebrew/bin"
 
 # Source aliases
 source ~/.aliases
+
+# Add path for neovim
+export VIMRUNTIME="/opt/homebrew/Cellar/neovim/$(nvim --version | head -n 1 | awk '{print $2}')/share/nvim/runtime"
