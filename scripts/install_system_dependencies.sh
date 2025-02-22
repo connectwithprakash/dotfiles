@@ -9,6 +9,7 @@ SYSTEM_DEPENDENCIES=(
   "stats"
   "pipx"
   "neovim"
+  "ripgrep"  # Added ripgrep
   # Add more system dependencies as needed
 )
 
