@@ -95,6 +95,20 @@ function installNeovim() {
   fi
 }
 
+# Function to install Claude Code configurations
+function installClaudeCode() {
+  # Dotfiles directory
+  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  # Run Claude Code install script if it exists and is executable
+  if [ -f "$DOTFILES_DIR/.claude/install.sh" ] && [ -x "$DOTFILES_DIR/.claude/install.sh" ]; then
+    echo "🤖 Installing Claude Code configurations..."
+    "$DOTFILES_DIR/.claude/install.sh"
+  else
+    echo "⚠️ .claude/install.sh not found or not executable. Skipping Claude Code setup."
+  fi
+}
+
 # Main execution logic
 if [ "$1" = "--force" -o "$1" = "-f" ]; then
   installSystemDependencies
@@ -103,6 +117,7 @@ if [ "$1" = "--force" -o "$1" = "-f" ]; then
   installZsh
   installVSCode
   installNeovim
+  installClaudeCode
 else
   read -p "🔄 Do you want to install system dependencies? (y/n) " -n 1
   echo ""
@@ -139,6 +154,12 @@ else
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     installNeovim
   fi
+
+  read -p "🤖 Do you want to install Claude Code configurations? (y/n) " -n 1
+  echo ""
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    installClaudeCode
+  fi
 fi
 
 # Unset functions to clean up the environment
@@ -148,5 +169,6 @@ unset installPipxDependencies
 unset installZsh
 unset installVSCode
 unset installNeovim
+unset installClaudeCode
 
 echo "🎉 All tasks completed! Your environment is now set up and ready to use."

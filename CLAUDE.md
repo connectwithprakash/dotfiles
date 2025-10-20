@@ -204,6 +204,57 @@ When pulling updates from repository:
 4. **Review diffs** before confirming sync
 5. **Reload shell**: `source ~/.zshrc` or `source ~/.bash_profile`
 
+## Claude Code Configuration
+
+The repository includes global Claude Code configurations for consistency across projects.
+
+### Directory Structure
+
+```
+.claude/
+├── settings.json                          # Global Claude Code settings
+└── skills/
+    └── natural-text-corrector/
+        └── SKILL.md                       # Text correction skill
+```
+
+### Settings (`settings.json`)
+
+**Custom Status Line**: Shows user, hostname, working directory, and model in the CLI
+```bash
+user@hostname:directory [model-name]
+```
+
+**Enabled Plugins**:
+- `document-skills@anthropic-agent-skills` - Excel, Word, PowerPoint, PDF manipulation
+
+**Features**:
+- `alwaysThinkingEnabled: false` - Disables always-on thinking mode
+
+### Skills
+
+**natural-text-corrector**: Corrects English text by:
+- Removing AI-generated patterns (excessive em dashes, formal phrases)
+- Fixing speech-to-text errors (homophones, punctuation, capitalization)
+- Improving natural flow while preserving author's voice
+
+Invoke with: `Skill("natural-text-corrector")` or the skill will be auto-suggested when relevant.
+
+### Installation
+
+Claude Code configurations are stored globally in `~/.claude/`. To sync:
+
+```bash
+# Deploy configurations from repo to global location
+cp -r .claude/* ~/.claude/
+
+# OR sync from global location back to repo (after making changes)
+cp ~/.claude/settings.json .claude/settings.json
+cp -r ~/.claude/skills/* .claude/skills/
+```
+
+**Note**: Only skills and settings.json are version-controlled. Runtime data (history, todos, debug logs) are excluded.
+
 ## Notes
 
 - The repository uses rsync with exclusions (`.git/`, `.DS_Store`, `bootstrap.sh`, etc.) when syncing
