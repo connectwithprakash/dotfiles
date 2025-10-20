@@ -259,7 +259,7 @@ run_health_check() {
   # Check development tools
   echo ""
   echo -e "${CYAN}Development Tools:${NC}"
-  for tool in git nvim code gum fzf jq tree ripgrep; do
+  for tool in git nvim code gum fzf jq tree; do
     if command -v "$tool" &> /dev/null; then
       print_success "$tool installed"
     else
@@ -267,6 +267,14 @@ run_health_check() {
       ((WARNINGS++))
     fi
   done
+
+  # Check ripgrep (binary is 'rg')
+  if command -v rg &> /dev/null; then
+    print_success "ripgrep installed"
+  else
+    print_info "ripgrep not installed (optional)"
+    ((WARNINGS++))
+  fi
 
   # Check Neovim plugins
   if command -v nvim &> /dev/null; then
