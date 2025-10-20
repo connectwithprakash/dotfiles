@@ -9,7 +9,9 @@ SYSTEM_DEPENDENCIES=(
   "stats"
   "pipx"
   "neovim"
-  "ripgrep"  # Added ripgrep
+  "ripgrep"
+  "gum"      # Beautiful TUI components for shell scripts
+  "fzf"      # Fuzzy finder for interactive selection
   # Add more system dependencies as needed
 )
 
