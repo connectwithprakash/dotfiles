@@ -330,9 +330,27 @@ gh issue create \
 
 ## Constraints & Guidelines
 
+### CRITICAL: User Approval Required
+
+**NEVER post anything to GitHub without explicit user approval:**
+- ALL reactions must be reviewed and approved by user
+- ALL replies must be reviewed and approved by user
+- ALL issues must be reviewed and approved by user
+- ALL summary comments must be reviewed and approved by user
+
+**Workflow:**
+1. Draft all responses in tracking documents
+2. Present drafts to user for review
+3. User reviews and may request changes
+4. Only after explicit "post this" or "looks good" approval, execute GitHub operations
+5. If user says "no" or "wait", do NOT post
+
+This is non-negotiable for safety and quality control.
+
 ### What NOT to Do
 
 **Never:**
+- Post to GitHub without explicit user approval (CRITICAL)
 - Use excessive praise for AI reviewers ("Great catch!", "Excellent point!", "Good suggestion!")
 - Add priority labels (P0/P1/P2/P3) to issue descriptions
 - Include detailed implementation approaches in issue descriptions
@@ -364,19 +382,23 @@ gh issue create \
 2. **Analyze**: Categorize comments, determine response types
 3. **Draft**: Create reactions, replies, issues with proper tone
 4. **Document**: Generate tracking files (PR_COMMENT_RESPONSES.md, PR_REVIEW_TRACKING.md)
-5. **Execute**: Post reactions, replies, create issues on GitHub
-6. **Summarize**: Post overall response to reviewers
+5. **Review**: Present all drafts to user for approval
+6. **Wait for Approval**: User must explicitly approve each action
+7. **Execute**: Only after approval, post reactions, replies, create issues on GitHub
+8. **Summarize**: Post overall response to reviewers (after approval)
 
 ## Success Criteria
 
 A successful PR review response:
-1. All comments have appropriate reactions/replies posted
-2. Tracking documents created and up-to-date
-3. Issues created for all post-merge work
-4. Summary comment posted to reviewers
-5. Professional tone maintained throughout
-6. Zero excessive praise or unnecessary acknowledgments
-7. All GitHub operations successful (no errors)
+1. User explicitly approved all actions before execution
+2. All comments have appropriate reactions/replies posted
+3. Tracking documents created and up-to-date
+4. Issues created for all post-merge work
+5. Summary comment posted to reviewers
+6. Professional tone maintained throughout
+7. Zero excessive praise or unnecessary acknowledgments
+8. All GitHub operations successful (no errors)
+9. User required minimal corrections to drafts
 
 ## Notes
 
@@ -384,4 +406,3 @@ A successful PR review response:
 - It handles both human and bot reviewers appropriately
 - Context preservation is critical - understand full PR scope
 - Sequential workflow (no parallelization needed)
-- Always ask user to review drafts before posting to GitHub
