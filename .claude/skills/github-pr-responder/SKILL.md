@@ -17,6 +17,35 @@ Activate when user:
 
 ## Core Workflow
 
+### 0. Investigation (Critical First Step)
+
+**BEFORE responding to any comment, investigate the actual implementation:**
+
+See `workflows/investigation.md` for detailed guidance.
+
+**Key principles:**
+- Read actual code, don't assume
+- Trace complete data flow
+- Question necessity and redundancy
+- Research unfamiliar features
+- Verify reviewer concerns are valid
+- Use parallel tool calls for efficiency
+
+**When to investigate:**
+- Reviewer questions implementation approach
+- Comment suggests alternatives
+- Uncertainty about whether feature works
+- Need to verify code behavior
+- Any claim that needs fact-checking
+
+**Investigation workflow:**
+1. Read the files mentioned in comments
+2. Trace function calls and data flow
+3. Search for usage patterns with Grep
+4. Check tests and configuration
+5. Research external documentation if needed
+6. Verify before agreeing to create issues
+
 ### 1. Data Gathering
 
 **Fetch PR Information:**
