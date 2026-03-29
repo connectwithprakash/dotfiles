@@ -227,15 +227,20 @@ prompt_select_dotfiles() {
     done
     echo "DEBUG: ---" >&2
 
-    # Use gum choose with multi-select - pass options as arguments, not stdin!
+    # Use gum choose with multi-select (compatible with Bash 3.2+)
     while IFS= read -r line; do
-      # Skip empty lines and headers, extract filename
+      echo "DEBUG: Received line: '$line'" >&2
+      # Skip headers and extract filename using simple string manipulation
       if [[ "$line" == ●\ * ]] || [[ "$line" == ○\ * ]]; then
+        # Remove the status indicator (● or ○) and space
         file="${line#● }"
         file="${file#○ }"
+        echo "DEBUG: Extracted file: '$file'" >&2
         selected_dotfiles+=("$file")
+      else
+        echo "DEBUG: Line did not match pattern" >&2
       fi
-    done < <(gum choose --no-limit --height 20 "${selection_list[@]}")
+    done < <(printf '%s\n' "${selection_list[@]}" | gum choose --no-limit --height 20)
 
     echo "DEBUG: Total selected: ${#selected_dotfiles[@]}" >&2
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+t#!/usr/bin/env bash
 
 # Define a list of system dependencies to check and install
 SYSTEM_DEPENDENCIES=(
