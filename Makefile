@@ -1,5 +1,5 @@
 .PHONY: install install-force install-deps install-pipx install-zsh install-neovim \
-       install-vscode install-claude sync status health test lint macos \
+       install-vscode install-claude install-hermes sync status health test lint macos \
        uninstall-zsh backup-zsh help
 
 help: ## Show this help
@@ -33,6 +33,9 @@ install-vscode: ## Install VS Code
 install-claude: ## Install Claude Code configurations
 	@./.claude/install.sh
 
+install-hermes: ## Install Hermes Agent + extra deps (Telegram, TTS, voice)
+	@./hermes/install.sh
+
 sync: ## Sync dotfiles (interactive direction choice)
 	@./update_dotfiles.sh
 
@@ -47,7 +50,7 @@ lint: ## Run shellcheck on all scripts
 	@shellcheck -x bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
-		.claude/install.sh \
+		.claude/install.sh hermes/install.sh \
 		2>&1 || true
 	@echo "Done."
 
@@ -56,7 +59,7 @@ test: lint ## Run all tests (currently just lint)
 	@for f in bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
-		.claude/install.sh; do \
+		.claude/install.sh hermes/install.sh; do \
 		bash -n "$$f" && echo "  [ok] $$f" || echo "  [FAIL] $$f"; \
 	done
 	@echo "All checks passed."

@@ -21,5 +21,9 @@ brew "pyenv"
 brew "uv"
 brew "ruff"
 
+# Hermes Agent dependencies
+brew "espeak-ng"
+brew "ffmpeg"
+
 # macOS apps (casks)
 cask "stats"
