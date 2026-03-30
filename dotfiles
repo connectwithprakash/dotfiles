@@ -14,14 +14,10 @@ set -e
 # Get the directory where this script is located
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Colors
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-CYAN='\033[0;36m'
-GRAY='\033[0;90m'
-NC='\033[0m'
+# Colors (used in print_* functions and inline output)
+# shellcheck disable=SC2034
+GREEN='\033[0;32m' BLUE='\033[0;34m' YELLOW='\033[1;33m'
+RED='\033[0;31m' CYAN='\033[0;36m' GRAY='\033[0;90m' NC='\033[0m'
 
 # Check if gum is available
 HAS_GUM=false
@@ -166,7 +162,7 @@ run_health_check() {
     ((warnings++))
   fi
 
-  [ -f "$HOME/.zshrc" ] && print_success ".zshrc exists" || { print_error ".zshrc not found"; ((errors++)); }
+  if [ -f "$HOME/.zshrc" ]; then print_success ".zshrc exists"; else print_error ".zshrc not found"; ((errors++)); fi
 
   echo ""
   echo -e "${CYAN}Development Tools:${NC}"
@@ -182,15 +178,15 @@ run_health_check() {
   if command -v nvim &> /dev/null; then
     echo ""
     echo -e "${CYAN}Neovim Configuration:${NC}"
-    [ -f "$HOME/.config/nvim/init.lua" ] && print_success "init.lua exists" || { print_info "init.lua not found"; ((warnings++)); }
-    [ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ] && print_success "lazy.nvim installed" || { print_info "lazy.nvim not installed"; ((warnings++)); }
+    if [ -f "$HOME/.config/nvim/init.lua" ]; then print_success "init.lua exists"; else print_info "init.lua not found"; ((warnings++)); fi
+    if [ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]; then print_success "lazy.nvim installed"; else print_info "lazy.nvim not installed"; ((warnings++)); fi
   fi
 
   echo ""
   echo -e "${CYAN}Prompt:${NC}"
   if command -v starship &> /dev/null; then
     print_success "Starship prompt installed"
-    [ -f "$HOME/.config/starship.toml" ] && print_success "starship.toml exists" || { print_info "starship.toml not found"; ((warnings++)); }
+    if [ -f "$HOME/.config/starship.toml" ]; then print_success "starship.toml exists"; else print_info "starship.toml not found"; ((warnings++)); fi
   else
     print_info "Starship not installed"
     ((warnings++))
@@ -242,7 +238,7 @@ update_tools() {
       if [ -d "$plugin_dir/.git" ]; then
         local plugin_name
         plugin_name="$(basename "$plugin_dir")"
-        git -C "$plugin_dir" pull --quiet && print_success "$plugin_name updated" || print_warning "$plugin_name update failed"
+        if git -C "$plugin_dir" pull --quiet; then print_success "$plugin_name updated"; else print_warning "$plugin_name update failed"; fi
       fi
     done
   fi
@@ -295,7 +291,7 @@ show_menu() {
     echo "6) Help"
     echo "7) Exit"
     echo ""
-    read -p "Choose an option (1-7): " choice
+    read -rp "Choose an option (1-7): " choice
 
     case "$choice" in
       1) "$DOTFILES_DIR/update_dotfiles.sh" ;;

@@ -69,6 +69,30 @@ make macos                  # Apply macOS preferences
 ./scripts/macos.sh
 ```
 
+## Commit Convention
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <short summary>
+
+<optional body>
+```
+
+**Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`
+
+**Scopes**: `zsh`, `neovim`, `vscode`, `bootstrap`, `scripts`, `aliases`, `claude`, `macos`
+
+**Examples**:
+```
+feat(neovim): migrate to lazy.nvim and native LSP
+fix(bootstrap): suppress Safari sandboxing errors
+docs(readme): add Brewfile and make targets
+chore(scripts): add shellcheck CI workflow
+```
+
+Keep the summary under 72 characters. Use the body for context on *why*, not *what*.
+
 ## Key Design Patterns
 
 ### Idempotent Scripts

@@ -14,7 +14,7 @@ if [ -t 1 ]; then
   MAGENTA='\033[0;35m'
   NC='\033[0m'
 else
-  BOLD='' DIM='' GREEN='' BLUE='' YELLOW='' RED='' CYAN='' GRAY='' MAGENTA='' NC=''
+  BOLD='' DIM='' GREEN='' BLUE='' YELLOW='' RED='' CYAN='' GRAY='' MAGENTA='' NC=''  # exported via sourcing scripts
 fi
 
 # Check if gum is available
@@ -42,7 +42,7 @@ prompt_yes_no() {
     return $?
   else
     while true; do
-      read -p "$1 (y/n): " yn
+      read -rp "$1 (y/n): " yn
       case $yn in
         [Yy]* ) return 0;;
         [Nn]* ) return 1;;
@@ -57,8 +57,9 @@ backup_file() {
   local file="$1"
   [ ! -f "$file" ] && return 0
 
-  local backup_dir="$HOME/.dotfiles-backup/$(date +%Y-%m-%d_%H%M%S)"
-  local relative_path="${file#$HOME/}"
+  local backup_dir
+  backup_dir="$HOME/.dotfiles-backup/$(date +%Y-%m-%d_%H%M%S)"
+  local relative_path="${file#"$HOME"/}"
   local backup_path="$backup_dir/$relative_path"
 
   mkdir -p "$(dirname "$backup_path")"
@@ -161,7 +162,7 @@ select_components() {
       ((i++))
     done
     echo ""
-    read -p "Selection: " selection
+    read -rp "Selection: " selection
 
     if [[ "$selection" == "a" || "$selection" == "A" ]]; then
       SELECTED_COMPONENTS=("${components[@]}")

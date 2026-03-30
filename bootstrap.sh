@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Don't use set -e — we handle failures per-step in run_step()
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 DOTFILES_DIR="$(pwd)"
 source "$DOTFILES_DIR/scripts/lib.sh"
 
@@ -28,7 +28,7 @@ configure_git_identity() {
     if [ "$HAS_GUM" = true ]; then
       current_name=$(gum input --placeholder "Your Name" --header "Git user name")
     else
-      read -p "  Git user name: " current_name
+      read -rp "  Git user name: " current_name
     fi
     [ -n "$current_name" ] && git config -f "$gitconfig" user.name "$current_name"
   fi
@@ -37,7 +37,7 @@ configure_git_identity() {
     if [ "$HAS_GUM" = true ]; then
       current_email=$(gum input --placeholder "you@example.com" --header "Git email")
     else
-      read -p "  Git email: " current_email
+      read -rp "  Git email: " current_email
     fi
     [ -n "$current_email" ] && git config -f "$gitconfig" user.email "$current_email"
   fi
@@ -66,6 +66,7 @@ syncDotfiles() {
     -avh --no-perms . ~ 2>/dev/null) || true
 
   if [ -n "$rsync_output" ]; then
+    # shellcheck source=/dev/null
     source ~/.bash_profile 2>/dev/null || true
   fi
 }

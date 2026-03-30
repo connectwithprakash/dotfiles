@@ -28,7 +28,7 @@ fi
 # Check if VSCode is already installed
 if [ -d "$VSCODE_APP_PATH" ]; then
   echo "Visual Studio Code is already installed."
-  read -p "Do you want to reinstall it? (y/n): " REINSTALL
+  read -rp "Do you want to reinstall it? (y/n): " REINSTALL
   if [[ "$REINSTALL" =~ ^[Yy]$ ]]; then
     echo "Reinstalling Visual Studio Code..."
     rm -rf "$VSCODE_APP_PATH"

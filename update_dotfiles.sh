@@ -139,7 +139,7 @@ prompt_sync_direction() {
     echo "1) Home to Repository"
     echo "2) Repository to Home"
     while true; do
-      read -p "Enter your choice (1/2): " direction
+      read -rp "Enter your choice (1/2): " direction
       case $direction in
         1 ) sync_home_to_repo; break;;
         2 ) sync_repo_to_home; break;;

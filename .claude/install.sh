@@ -18,7 +18,7 @@ else
   command_exists() { command -v "$1" >/dev/null 2>&1; }
   prompt_yes_no() {
     while true; do
-      read -p "$1 (y/n): " yn
+      read -rp "$1 (y/n): " yn
       case $yn in [Yy]* ) return 0;; [Nn]* ) return 1;; * ) echo "Please answer yes or no.";; esac
     done
   }
@@ -139,7 +139,7 @@ prompt_sync_direction() {
   echo "1) Repository to Global (~/.claude/) 📁➡️🏠"
   echo "2) Global to Repository (~/.claude/ ➡️📁)"
   while true; do
-    read -p "Enter your choice (1/2): " direction
+    read -rp "Enter your choice (1/2): " direction
     case $direction in
       1 ) sync_repo_to_global; break;;
       2 ) sync_global_to_repo; break;;
