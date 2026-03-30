@@ -27,4 +27,5 @@ brew "ffmpeg"
 
 # macOS apps (casks)
 cask "google-chrome"
+cask "obsidian"
 cask "stats"
