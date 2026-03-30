@@ -46,24 +46,25 @@ show_diff() {
 
 # Function to sync from repository to global (~/.claude/)
 sync_repo_to_global() {
-  echo "🔧 Syncing from repository to global ~/.claude/..."
+  echo "Syncing from repository to global ~/.claude/..."
 
   # Create global .claude directory if it doesn't exist
   if ! dir_exists "$GLOBAL_CLAUDE_DIR"; then
-    echo "📁 Creating global Claude Code directory: $GLOBAL_CLAUDE_DIR"
+    echo "Creating global Claude Code directory: $GLOBAL_CLAUDE_DIR"
     mkdir -p "$GLOBAL_CLAUDE_DIR"
   fi
 
-  # Show diffs if requested
-  if prompt_yes_no "👀 Do you want to see the changes before syncing?"; then
-    if file_exists "$DOTFILES_CLAUDE_DIR/settings.json" && file_exists "$GLOBAL_CLAUDE_DIR/settings.json"; then
-      show_diff "$GLOBAL_CLAUDE_DIR/settings.json" "$DOTFILES_CLAUDE_DIR/settings.json" "Current global" "Repository"
-    fi
+  # Show diffs if requested (skip in force mode)
+  if [ "$FORCE_MODE" != true ]; then
+    if prompt_yes_no "Preview changes before syncing?"; then
+      if file_exists "$DOTFILES_CLAUDE_DIR/settings.json" && file_exists "$GLOBAL_CLAUDE_DIR/settings.json"; then
+        show_diff "$GLOBAL_CLAUDE_DIR/settings.json" "$DOTFILES_CLAUDE_DIR/settings.json" "Current global" "Repository"
+      fi
 
-    # Confirm sync
-    if ! prompt_yes_no "🔄 Do you want to proceed with the sync?"; then
-      echo "❌ Sync cancelled."
-      return
+      if ! prompt_yes_no "Proceed with sync?"; then
+        echo "Sync cancelled."
+        return
+      fi
     fi
   fi
 
@@ -155,8 +156,9 @@ echo "Global: $GLOBAL_CLAUDE_DIR"
 echo ""
 
 # Check if running in automated mode (--force or called from bootstrap)
+FORCE_MODE=false
 if [ "$1" = "--force" ] || [ "$1" = "-f" ]; then
-  # Automated mode: always sync repo to global
+  FORCE_MODE=true
   sync_repo_to_global
 else
   # Interactive mode: prompt for direction
