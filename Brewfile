@@ -3,6 +3,7 @@
 # Check:   brew bundle check --file=Brewfile
 
 # CLI tools
+brew "gh"
 brew "jq"
 brew "tree"
 brew "btop"
