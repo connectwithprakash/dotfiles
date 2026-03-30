@@ -26,4 +26,5 @@ brew "espeak-ng"
 brew "ffmpeg"
 
 # macOS apps (casks)
+cask "google-chrome"
 cask "stats"
