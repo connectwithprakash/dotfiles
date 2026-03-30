@@ -14,7 +14,8 @@ if [ -t 1 ]; then
   MAGENTA='\033[0;35m'
   NC='\033[0m'
 else
-  BOLD='' DIM='' GREEN='' BLUE='' YELLOW='' RED='' CYAN='' GRAY='' MAGENTA='' NC=''  # exported via sourcing scripts
+  # shellcheck disable=SC2034
+  BOLD='' DIM='' GREEN='' BLUE='' YELLOW='' RED='' CYAN='' GRAY='' MAGENTA='' NC=''
 fi
 
 # Check if gum is available
