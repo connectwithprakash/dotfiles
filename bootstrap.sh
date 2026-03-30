@@ -71,7 +71,7 @@ syncDotfiles() {
 
 COMPONENTS=(
   "System Dependencies"
-  "Python Tools (pipx)"
+  "Python (pyenv + uv)"
   "Dotfiles Sync"
   "Zsh + Starship"
   "Neovim"
@@ -89,7 +89,7 @@ run_component_by_name() {
   local name="$1"
   case "$name" in
     "System Dependencies")  run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ;;
-    "Python Tools (pipx)")  run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ;;
+    "Python (pyenv + uv)")  run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/install_python_tools.sh" ;;
     "Dotfiles Sync")        print_step "$STEP" "$TOTAL" "$name"; syncDotfiles; print_success "Done" ;;
     "Zsh + Starship")       run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/zsh/install.sh" ;;
     "Neovim")               run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/neovim/install.sh" ;;

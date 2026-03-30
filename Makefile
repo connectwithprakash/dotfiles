@@ -18,8 +18,8 @@ install-deps: ## Install system dependencies (uses Brewfile on macOS)
 brew-check: ## Check if all Brewfile dependencies are installed
 	@brew bundle check --file=Brewfile || echo "Run 'make install-deps' to install missing packages"
 
-install-pipx: ## Install Python tools via pipx
-	@./scripts/install_pipx_dependencies.sh
+install-python: ## Install Python toolchain (pyenv, uv, ruff)
+	@./scripts/install_python_tools.sh
 
 install-zsh: ## Install Zsh + Oh My Zsh + plugins
 	@./zsh/install.sh

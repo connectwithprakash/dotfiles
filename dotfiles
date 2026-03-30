@@ -170,7 +170,7 @@ run_health_check() {
 
   echo ""
   echo -e "${CYAN}Development Tools:${NC}"
-  for tool in git nvim code gum fzf fd jq tree rg starship zoxide; do
+  for tool in git nvim code gum fzf fd jq tree rg starship zoxide pyenv uv ruff; do
     if command -v "$tool" &> /dev/null; then
       print_success "$tool installed"
     else
@@ -216,14 +216,23 @@ update_tools() {
     brew update && brew upgrade
   fi
 
-  if command -v pipx &> /dev/null; then
-    print_info "Updating pipx packages..."
-    pipx upgrade-all || true
+  if command -v uv &> /dev/null; then
+    print_info "Updating uv tools..."
+    uv tool upgrade --all || true
   fi
 
-  if command -v nvim &> /dev/null && [ -f "$HOME/.local/share/nvim/site/autoload/plug.vim" ]; then
+  if command -v pyenv &> /dev/null; then
+    print_info "Updating pyenv..."
+    if command -v brew &> /dev/null; then
+      brew upgrade pyenv || true
+    else
+      pyenv update || true
+    fi
+  fi
+
+  if command -v nvim &> /dev/null && [ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]; then
     print_info "Updating Neovim plugins..."
-    nvim +PlugUpdate +qall
+    nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
   fi
 
   local zsh_custom="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"

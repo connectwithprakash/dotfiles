@@ -73,6 +73,11 @@ alias py=python3
 alias py3='python3'
 alias pip='pip3'
 
+# uv shortcuts
+alias uvr='uv run'
+alias uvs='uv sync'
+alias uva='uv add'
+
 # ──────────────────────────────────────────────────────────────────────────────
 # macOS-specific aliases (only loaded on Darwin)
 # ──────────────────────────────────────────────────────────────────────────────

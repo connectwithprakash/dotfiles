@@ -69,3 +69,8 @@ if command -v nvim &> /dev/null; then
 	fi
 	unset _brew_prefix _nvim_version _vimruntime_path
 fi
+
+# pyenv
+if command -v pyenv &> /dev/null; then
+	eval "$(pyenv init -)"
+fi

@@ -56,6 +56,11 @@ if (( $+commands[nvim] )); then
   unset _brew_prefix _nvim_version _vimruntime_path
 fi
 
+# pyenv
+if (( $+commands[pyenv] )); then
+  eval "$(pyenv init -)"
+fi
+
 # Starship prompt (must be last)
 if (( $+commands[starship] )); then
   eval "$(starship init zsh)"

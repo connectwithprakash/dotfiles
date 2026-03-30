@@ -14,8 +14,8 @@ Personal development environment configurations for macOS (with partial Linux su
 | **tmux** | Vim-style keybindings, mouse support, sane defaults |
 | **Claude Code** | Global settings and skills sync |
 | **macOS** | System preferences (Finder, Dock, keyboard, screenshots, etc.) |
-| **System** | Homebrew, jq, tree, btop, tmux, ripgrep, fd, fzf, gum, starship, zoxide |
-| **Python** | pipx-managed black, flake8, poetry |
+| **System** | Homebrew, gh, jq, tree, btop, tmux, ripgrep, fd, fzf, gum, starship, zoxide |
+| **Python** | pyenv (version management), uv (packages/projects), ruff (lint/format) |
 
 ## Quick Start
 
@@ -98,7 +98,7 @@ Files are backed up to `~/.dotfiles-backup/` before being overwritten.
 ├── scripts/
 │   ├── lib.sh            # Shared utility functions
 │   ├── install_system_dependencies.sh
-│   ├── install_pipx_dependencies.sh
+│   ├── install_python_tools.sh
 │   └── macos.sh          # macOS system preferences
 ├── vscode/
 │   ├── install.sh        # VS Code setup (auto-detects architecture)

@@ -24,7 +24,7 @@ jobs:
             dotfiles \
             scripts/lib.sh \
             scripts/install_system_dependencies.sh \
-            scripts/install_pipx_dependencies.sh \
+            scripts/install_python_tools.sh \
             scripts/macos.sh \
             zsh/install.sh \
             zsh/uninstall.sh \

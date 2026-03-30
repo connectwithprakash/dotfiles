@@ -96,7 +96,7 @@ elif [ -n "$COMPONENTS" ]; then
       vscode|code) ./vscode/install.sh ;;
       claude)     ./.claude/install.sh --force ;;
       system|deps) ./scripts/install_system_dependencies.sh ;;
-      pipx|python) ./scripts/install_pipx_dependencies.sh ;;
+      python|pyenv|uv) ./scripts/install_python_tools.sh ;;
       *) print_warning "Unknown component: $component" ;;
     esac
   done

@@ -61,7 +61,7 @@ make macos                  # Apply macOS preferences
 
 # Component-specific
 ./scripts/install_system_dependencies.sh
-./scripts/install_pipx_dependencies.sh
+./scripts/install_python_tools.sh
 ./zsh/install.sh
 ./neovim/install.sh
 ./vscode/install.sh
@@ -91,9 +91,13 @@ done
 
 ## System Dependencies
 
-**Homebrew packages** (declared in `Brewfile`, installed via `brew bundle`): jq, tree, btop, tmux, pipx, neovim, ripgrep, fd, gum, fzf, starship, zoxide, stats (macOS cask)
+**Homebrew packages** (declared in `Brewfile`, installed via `brew bundle`): gh, jq, tree, btop, tmux, neovim, ripgrep, fd, gum, fzf, starship, zoxide, pyenv, uv, ruff, stats (macOS cask)
 
-**Pipx-managed**: black, flake8, poetry
+**Python toolchain** (installed via `scripts/install_python_tools.sh`):
+- `pyenv` - Python version management
+- `uv` - Fast package/project manager (replaces pip, venv, pipx, poetry for most workflows)
+- `ruff` - Fast linter + formatter (replaces black, flake8, isort)
+- `poetry`, `ipython` - Installed as global tools via `uv tool install`
 
 **Zsh plugins**: zsh-autosuggestions, zsh-completions, zsh-syntax-highlighting, zsh-history-substring-search
 

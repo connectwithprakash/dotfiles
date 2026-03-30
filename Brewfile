@@ -15,7 +15,11 @@ brew "fzf"
 brew "gum"
 brew "starship"
 brew "zoxide"
-brew "pipx"
+
+# Python toolchain
+brew "pyenv"
+brew "uv"
+brew "ruff"
 
 # macOS apps (casks)
 cask "stats"
