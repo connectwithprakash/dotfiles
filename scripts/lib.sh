@@ -91,6 +91,8 @@ run_step() {
   local total="$2"
   local label="$3"
   local script="$4"
+  shift 4
+  local args=("$@")
 
   print_step "$step_num" "$total" "$label"
 
@@ -102,7 +104,7 @@ run_step() {
   local start_time
   start_time=$(date +%s)
 
-  if "$script"; then
+  if "$script" "${args[@]}"; then
     local elapsed=$(( $(date +%s) - start_time ))
     print_success "Done (${elapsed}s)"
     return 0

@@ -27,7 +27,7 @@ install_brew() {
 install_with_brewfile() {
   install_brew
   echo "Installing dependencies from Brewfile..."
-  brew bundle --file="$DOTFILES_DIR/Brewfile" --no-lock
+  brew bundle --file="$DOTFILES_DIR/Brewfile"
   echo "All Homebrew dependencies installed!"
 }
 

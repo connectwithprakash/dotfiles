@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
-set -e
-
+# Don't use set -e — we handle failures per-step in run_step()
 cd "$(dirname "${BASH_SOURCE[0]}")"
 DOTFILES_DIR="$(pwd)"
 source "$DOTFILES_DIR/scripts/lib.sh"
+
+# Ensure Homebrew is in PATH for this session and all child scripts
+ensure_brew_in_path
+export PATH
 
 # ── Git identity ─────────────────────────────────────────────────────────────
 
@@ -94,7 +97,7 @@ run_component_by_name() {
     "Zsh + Starship")       run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/zsh/install.sh" ;;
     "Neovim")               run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/neovim/install.sh" ;;
     "VS Code")              run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/vscode/install.sh" ;;
-    "Claude Code")          run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/.claude/install.sh" ;;
+    "Claude Code")          run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/.claude/install.sh" "--force" ;;
     "macOS Preferences")    run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/macos.sh" ;;
   esac
 }

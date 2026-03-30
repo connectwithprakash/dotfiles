@@ -60,13 +60,14 @@ else
   echo "VS Code 'code' command is already in PATH."
 fi
 
-# Create symlink for 'code' command
+# Create symlink for 'code' command (try without sudo first, fall back to sudo)
 if [ -L "$SYMLINK_PATH" ] || [ -f "$SYMLINK_PATH" ]; then
-  echo "Updating existing symlink for 'code' command..."
-  sudo rm -f "$SYMLINK_PATH"
+  rm -f "$SYMLINK_PATH" 2>/dev/null || sudo rm -f "$SYMLINK_PATH" 2>/dev/null || true
 fi
 echo "Creating symlink for 'code' command..."
-sudo ln -sf "$CODE_CMD_PATH/code" "$SYMLINK_PATH"
+ln -sf "$CODE_CMD_PATH/code" "$SYMLINK_PATH" 2>/dev/null || \
+  sudo ln -sf "$CODE_CMD_PATH/code" "$SYMLINK_PATH" 2>/dev/null || \
+  echo "Note: Could not create symlink at $SYMLINK_PATH (needs sudo). The 'code' command is available via PATH."
 
 # Verify that the 'code' command is working
 if command -v code &> /dev/null; then
