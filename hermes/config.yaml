@@ -1,0 +1,18 @@
+ ""model:
+  default: anthropic/claude-opus-4.6
+  provider: openrouter
+
+agent:
+  max_turns: 90
+  reasoning_effort: high
+
+stt:
+  enabled: true
+  provider: local
+tts:
+  provider: elevenlabs
+
+display:
+  skin: default
+  tool_progress: full
+  background_process_notifications: all
