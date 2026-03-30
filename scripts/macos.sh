@@ -6,19 +6,14 @@
 # Run this script after a fresh macOS install to set sensible defaults.
 # Some changes require a logout/restart to take effect.
 
-set -e
-
 echo "Applying macOS system preferences..."
 
 # Close any open System Preferences panes to prevent overriding
 osascript -e 'tell application "System Preferences" to quit' 2>/dev/null || true
 
-# Ask for administrator password upfront (skip if non-interactive)
-if ! sudo -v 2>/dev/null; then
-  echo "Cannot get sudo access (non-interactive session). Run this script manually:"
-  echo "  ./scripts/macos.sh"
-  exit 1
-fi
+# Ask for administrator password upfront
+echo "Some preferences require sudo access."
+sudo -v
 
 # Keep-alive: update existing `sudo` timestamp until script has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &

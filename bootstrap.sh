@@ -88,6 +88,19 @@ if [ "$(uname -s)" = "Darwin" ]; then
   COMPONENTS+=("macOS Preferences")
 fi
 
+# macOS preferences require sudo and must run in a fresh terminal session
+# Running sudo inside bootstrap kills open apps (Safari, Terminal) via TTY signals
+_run_macos_prefs() {
+  print_step "$STEP" "$TOTAL" "macOS Preferences"
+  echo ""
+  print_info "macOS preferences require sudo and must be run separately to avoid"
+  print_info "closing open applications. Run this after bootstrap completes:"
+  echo ""
+  echo -e "    ${BOLD}./scripts/macos.sh${NC}"
+  echo ""
+  print_success "Reminder noted"
+}
+
 # Map component name to function
 run_component_by_name() {
   local name="$1"
@@ -99,7 +112,7 @@ run_component_by_name() {
     "Neovim")               run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/neovim/install.sh" ;;
     "VS Code")              run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/vscode/install.sh" ;;
     "Claude Code")          run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/.claude/install.sh" "--force" ;;
-    "macOS Preferences")    run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/macos.sh" ;;
+    "macOS Preferences")    _run_macos_prefs ;;
   esac
 }
 
