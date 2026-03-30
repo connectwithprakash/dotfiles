@@ -1,4 +1,14 @@
-.DS_STORE
-
-# Development tracking (temporary)
+.DS_Store
+*.swp
+*.swo
+*~
+.env
+.env.local
 .dev/
+__pycache__/
+*.pyc
+node_modules/
+.vscode/
+.idea/
+*.log
+zsh/.zsh_history

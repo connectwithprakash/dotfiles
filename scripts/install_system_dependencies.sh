@@ -1,83 +1,111 @@
-t#!/usr/bin/env bash
+#!/usr/bin/env bash
 
-# Define a list of system dependencies to check and install
-SYSTEM_DEPENDENCIES=(
-  "jq"
-  "tree"
-  "btop"
-  "tmux"
-  "stats"
-  "pipx"
-  "neovim"
-  "ripgrep"
-  "gum"      # Beautiful TUI components for shell scripts
-  "fzf"      # Fuzzy finder for interactive selection
-  # Add more system dependencies as needed
-)
+set -e
 
-# Function to check if a command exists
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-# Function to install Homebrew (for macOS)
+# Install Homebrew if missing
 install_brew() {
   if ! command_exists brew; then
-    echo "🍺 Homebrew is not installed. 🌟 Initiating Homebrew installation..."
+    echo "Homebrew is not installed. Installing..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo "🔧 Configuring Homebrew in the PATH..."
-    echo "# Setting Homebrew in the PATH" >> "$HOME/.bash_profile"
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.bash_profile"
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-    source "$HOME/.bash_profile"
-    echo "✅ Homebrew installation complete!"
+    if [ -f /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -f /usr/local/bin/brew ]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+    echo "Homebrew installation complete!"
   fi
 }
 
-# Function to install system dependencies using Homebrew (for macOS)
-install_with_brew() {
+# macOS: use Brewfile (declarative, single command)
+install_with_brewfile() {
   install_brew
-  echo "🔧 Installing $1 using Homebrew... 🍺"
-  brew install "$1"
-  echo "✅ $1 installation complete!"
+  echo "Installing dependencies from Brewfile..."
+  brew bundle --file="$DOTFILES_DIR/Brewfile" --no-lock
+  echo "All Homebrew dependencies installed!"
 }
 
-# Function to install system dependencies using APT (for Debian-based Linux)
+# Linux: install individually via apt
 install_with_apt() {
-  if ! command_exists apt; then
-    echo "⚠️ APT package manager is not available. ❌ Please install dependencies manually."
-    exit 1
+  if ! command_exists apt-get; then
+    echo "APT not available. Please install dependencies manually."
+    return 1
   fi
-  echo "🔧 Installing $1 using APT... 🐧"
-  sudo apt update
-  sudo apt install -y "$1"
-  echo "✅ $1 installation complete!"
-}
 
-# Main function to install system dependencies
-install_system_dependencies() {
-  for dep in "${SYSTEM_DEPENDENCIES[@]}"; do
-    if ! command_exists "$dep"; then
-      echo "🚀 $dep is not installed. 🌟 Initiating installation..."
-      case "$(uname -s)" in
-        Darwin)
-          install_with_brew "$dep"
-          ;;
-        Linux)
-          install_with_apt "$dep"
-          ;;
-        *)
-          echo "❌ Unsupported operating system. Please install $dep manually."
-          exit 1
-          ;;
-      esac
+  # Map Homebrew package names to apt package names where they differ
+  declare -A APT_NAMES=(
+    [neovim]="neovim"
+    [ripgrep]="ripgrep"
+    [fd]="fd-find"
+    [fzf]="fzf"
+    [tmux]="tmux"
+    [jq]="jq"
+    [tree]="tree"
+    [btop]="btop"
+  )
+
+  sudo apt-get update -qq
+
+  for pkg in jq tree btop tmux neovim ripgrep fd fzf; do
+    local apt_name="${APT_NAMES[$pkg]:-$pkg}"
+    local binary="$pkg"
+    case "$pkg" in
+      neovim) binary="nvim" ;;
+      ripgrep) binary="rg" ;;
+    esac
+
+    if ! command_exists "$binary"; then
+      echo "Installing $pkg..."
+      sudo apt-get install -y "$apt_name"
     else
-      echo "✅ $dep is already installed. Skipping..."
+      echo "$pkg is already installed. Skipping."
     fi
   done
+
+  # Tools that need special install on Linux
+  if ! command_exists starship; then
+    echo "Installing Starship..."
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+  fi
+
+  if ! command_exists zoxide; then
+    echo "Installing zoxide..."
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+  fi
+
+  if ! command_exists gum; then
+    echo "Installing gum..."
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+    sudo apt-get update -qq && sudo apt-get install -y gum
+  fi
+
+  if ! command_exists pipx; then
+    echo "Installing pipx..."
+    sudo apt-get install -y pipx
+    pipx ensurepath
+  fi
 }
 
-# Execute the installation function
-install_system_dependencies
+# Main
+case "$(uname -s)" in
+  Darwin)
+    install_with_brewfile
+    ;;
+  Linux)
+    install_with_apt
+    ;;
+  *)
+    echo "Unsupported operating system. Please install dependencies manually."
+    exit 1
+    ;;
+esac
 
-echo "🎉 All system dependencies have been successfully installed! 🚀"
+echo "All system dependencies installed!"

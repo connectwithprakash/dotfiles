@@ -1,39 +1,44 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Function to check if a command exists
 command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-# Ensure script is running with a valid PATH
-source "$HOME/.bash_profile" || source "$HOME/.zshrc"
+# Ensure Homebrew is available
+if [ -f /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -f /usr/local/bin/brew ]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
 
 # Install pipx if not already installed
 if ! command_exists pipx; then
-  echo "pipx is not installed. Installing pipx using Homebrew..."
+  echo "pipx is not installed. Installing using Homebrew..."
   if ! command_exists brew; then
-    echo "Homebrew is not installed. Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo "Homebrew is not installed. Please install Homebrew first."
+    exit 1
   fi
   brew install pipx
-  # Add pipx to PATH
-  export PATH="$PATH:$HOME/.local/bin"
-else
-  echo "pipx is already installed."
+  pipx ensurepath
 fi
+
+# Ensure pipx bin dir is on PATH
+export PATH="$PATH:$HOME/.local/bin"
 
 # Define a list of pipx-managed dependencies to check and install
 PIPX_DEPENDENCIES=(
   "black"
   "flake8"
   "poetry"
-  # Add more pipx dependencies as needed
 )
 
 # Function to install pipx-managed dependencies
 install_pipx_dependencies() {
   for dep in "${PIPX_DEPENDENCIES[@]}"; do
-    if ! pipx list | grep -q "$dep"; then
+    if ! pipx list --short 2>/dev/null | grep -q "^${dep} "; then
       echo "$dep is not installed. Installing with pipx..."
       pipx install "$dep"
     else
@@ -42,7 +47,6 @@ install_pipx_dependencies() {
   done
 }
 
-# Execute the installation function
 install_pipx_dependencies
 
 echo "Pipx dependency installation complete."

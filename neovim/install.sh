@@ -10,156 +10,148 @@ command_exists() {
 # Install Homebrew if not installed
 install_brew() {
   if ! command_exists brew; then
-    echo "🍺 Homebrew is not installed. 🌟 Initiating Homebrew installation..."
+    echo "Homebrew is not installed. Installing..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo "🔧 Configuring Homebrew in the PATH..."
-    echo "# Setting Homebrew in the PATH" >> "$HOME/.bash_profile"
-    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.bash_profile"
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-    source "$HOME/.bash_profile"
-    echo "✅ Homebrew installation complete!"
+    if [ -f /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -f /usr/local/bin/brew ]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+    echo "Homebrew installation complete!"
   else
-    echo "✅ Homebrew is already installed."
+    echo "Homebrew is already installed."
   fi
 }
 
 # Install Neovim
 install_neovim() {
   if ! command_exists nvim; then
-    echo "📦 Neovim is not installed. Installing Neovim..."
+    echo "Installing Neovim..."
     brew install neovim
   else
-    echo "📦 Neovim is already installed. Updating Neovim..."
-    brew upgrade neovim
+    echo "Neovim is already installed. Updating..."
+    brew upgrade neovim || true
   fi
 }
 
-# Install Node.js
-install_node() {
-  if ! command_exists node; then
-    echo "📦 Node.js is not installed. Installing Node.js..."
-    brew install node
+# Install ripgrep (required by Telescope live_grep)
+install_ripgrep() {
+  if ! command_exists rg; then
+    echo "Installing ripgrep..."
+    brew install ripgrep
   else
-    echo "✅ Node.js is already installed."
+    echo "ripgrep is already installed."
   fi
 }
 
-# Install Vim-Plug for Neovim
-install_vim_plug() {
-  if [ ! -f "$HOME/.local/share/nvim/site/autoload/plug.vim" ]; then
-    echo "🔌 Installing Vim-Plug..."
-    curl -fLo "$HOME/.local/share/nvim/site/autoload/plug.vim" --create-dirs \
-      https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+# Install fd (faster find, used by Telescope)
+install_fd() {
+  if ! command_exists fd; then
+    echo "Installing fd..."
+    brew install fd
   else
-    echo "✅ Vim-Plug is already installed."
+    echo "fd is already installed."
   fi
 }
 
-# Copy init.vim to the Neovim configuration directory
-setup_init_vim() {
-  CONFIG_DIR="$HOME/.config/nvim"
-  INIT_VIM="$CONFIG_DIR/init.vim"
-  REPO_INIT_VIM="$(dirname "$0")/init.vim"
+# Copy init.lua to the Neovim configuration directory
+setup_config() {
+  local config_dir="$HOME/.config/nvim"
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-  mkdir -p "$CONFIG_DIR"
+  mkdir -p "$config_dir"
 
-  if [ -f "$REPO_INIT_VIM" ]; then
-    echo "📄 Copying init.vim to Neovim configuration directory..."
-    cp "$REPO_INIT_VIM" "$INIT_VIM"
+  # Use init.lua (modern Lua config)
+  if [ -f "$script_dir/init.lua" ]; then
+    echo "Copying init.lua to Neovim configuration directory..."
+    cp "$script_dir/init.lua" "$config_dir/init.lua"
+    # Remove legacy init.vim if present
+    [ -f "$config_dir/init.vim" ] && rm -f "$config_dir/init.vim"
   else
-    echo "⚠️ init.vim not found in the repository. Please ensure it exists in the neovim directory."
+    echo "Warning: init.lua not found in the repository."
   fi
 }
 
-# Install Neovim plugins
-install_neovim_plugins() {
-  echo "🔌 Installing Neovim plugins..."
-  nvim +PlugInstall +qall
+# Install plugins via lazy.nvim (self-bootstrapping, runs on first launch)
+install_plugins() {
+  echo "Installing Neovim plugins (lazy.nvim bootstraps automatically)..."
+  nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
+  echo "Plugins installed."
+}
+
+# Install Mason LSP servers
+install_lsp_servers() {
+  echo "Installing LSP servers via Mason..."
+  nvim --headless "+MasonInstall lua-language-server pyright typescript-language-server bash-language-server json-lsp" +qa 2>/dev/null || true
+  echo "LSP servers installed."
 }
 
 # Set VIMRUNTIME environment variable
 set_vimruntime() {
-  # Extract the version number from nvim --version output
-  VIM_VERSION=$(nvim --version | head -n 1 | awk '{print $2}' | sed 's/^v//')
-  # Set the VIMRUNTIME environment variable
-  VIMRUNTIME_PATH="/opt/homebrew/Cellar/neovim/${VIM_VERSION}/share/nvim/runtime"
-
-  echo "🔍 Detected VIMRUNTIME path: $VIMRUNTIME_PATH"
-
-  if [ -d "$VIMRUNTIME_PATH" ]; then
-    export VIMRUNTIME="$VIMRUNTIME_PATH"
-    
-    # Add to both .bash_profile and .zshrc to cover both Bash and Zsh users
-    for rc_file in "$HOME/.bash_profile" "$HOME/.zshrc"; do
-      if [ -f "$rc_file" ]; then
-        if ! grep -q "export VIMRUNTIME=" "$rc_file"; then
-          echo "export VIMRUNTIME=\"$VIMRUNTIME_PATH\"" >> "$rc_file"
-          echo "📄 Added VIMRUNTIME to $rc_file"
-        else
-          echo "✅ VIMRUNTIME already present in $rc_file"
-        fi
-      fi
-    done
-    
-    echo "✅ VIMRUNTIME set to $VIMRUNTIME_PATH"
-  else
-    echo "❌ VIMRUNTIME path $VIMRUNTIME_PATH does not exist. Please check your Neovim installation."
+  if ! command_exists nvim; then
+    echo "Warning: Neovim not found. Cannot set VIMRUNTIME."
+    return
   fi
-}
 
-# Install ripgrep
-install_ripgrep() {
-  if ! command_exists rg; then
-    echo "📦 ripgrep is not installed. Installing ripgrep..."
-    brew install ripgrep
+  local brew_prefix
+  brew_prefix="$(brew --prefix 2>/dev/null || echo "")"
+  local vimruntime_path="$brew_prefix/share/nvim/runtime"
+
+  if [ -z "$brew_prefix" ] || [ ! -d "$vimruntime_path" ]; then
+    local vim_version
+    vim_version=$(nvim --version | head -n 1 | awk '{print $2}' | sed 's/^v//')
+    vimruntime_path="$brew_prefix/Cellar/neovim/${vim_version}/share/nvim/runtime"
+  fi
+
+  if [ -d "$vimruntime_path" ]; then
+    export VIMRUNTIME="$vimruntime_path"
+    echo "VIMRUNTIME set to $vimruntime_path"
   else
-    echo "✅ ripgrep is already installed."
+    echo "Warning: VIMRUNTIME path does not exist. Check your Neovim installation."
   fi
 }
 
 # Check health of the setup
 check_health() {
-  echo "🔍 Checking health of the setup..."
+  echo "Checking health of the setup..."
 
-  for tool in brew nvim node rg; do
-    if command_exists $tool; then
-      echo "✅ $tool is installed."
+  for tool in brew nvim rg fd; do
+    if command_exists "$tool"; then
+      echo "  [ok] $tool is installed."
     else
-      echo "❌ $tool is not installed."
+      echo "  [missing] $tool is not installed."
     fi
   done
 
-  if [ -f "$HOME/.local/share/nvim/site/autoload/plug.vim" ]; then
-    echo "✅ Vim-Plug is installed."
+  if [ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]; then
+    echo "  [ok] lazy.nvim is installed."
   else
-    echo "❌ Vim-Plug is not installed."
+    echo "  [missing] lazy.nvim is not installed."
   fi
 
   if [ -n "$VIMRUNTIME" ] && [ -d "$VIMRUNTIME" ]; then
-    echo "✅ VIMRUNTIME is set correctly."
+    echo "  [ok] VIMRUNTIME is set correctly."
   else
-    echo "❌ VIMRUNTIME is not set correctly."
+    echo "  [missing] VIMRUNTIME is not set correctly."
   fi
 
-  echo "🔍 Health check complete!"
+  echo "Health check complete!"
 }
 
-# Set environment variables to disable unwanted behavior
+# Suppress Homebrew noise
 export HOMEBREW_NO_INSTALL_CLEANUP=1
 export HOMEBREW_NO_ENV_HINTS=1
 
-# Main function to install Neovim and plugins
-echo "🚀 Starting Neovim setup..."
+# Main
+echo "Starting Neovim setup..."
 install_brew
 install_neovim
-install_node
-install_vim_plug
-setup_init_vim
-set_vimruntime
-install_neovim_plugins
 install_ripgrep
-
-# Run health check
+install_fd
+setup_config
+set_vimruntime
+install_plugins
+install_lsp_servers
 check_health
-
-echo "🎉 Neovim setup complete!"
+echo "Neovim setup complete!"

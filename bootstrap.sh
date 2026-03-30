@@ -1,174 +1,206 @@
 #!/usr/bin/env bash
 
-# Change directory to the location of the script
+set -e
+
 cd "$(dirname "${BASH_SOURCE[0]}")"
+DOTFILES_DIR="$(pwd)"
+source "$DOTFILES_DIR/scripts/lib.sh"
 
-# Update from the remote repository
-git pull origin main
+# ── Git identity ─────────────────────────────────────────────────────────────
 
-# Function to sync dotfiles only if there are changes
-function syncDotfiles() {
-  echo "🔄 Syncing your dotfiles to ensure everything is up-to-date..."
+configure_git_identity() {
+  local gitconfig="$DOTFILES_DIR/.gitconfig"
+  local current_name current_email
+  current_name=$(git config -f "$gitconfig" user.name 2>/dev/null || echo "")
+  current_email=$(git config -f "$gitconfig" user.email 2>/dev/null || echo "")
+
+  if [ -z "$current_name" ] || [ -z "$current_email" ]; then
+    echo ""
+    echo -e "${BOLD}Git Identity${NC}"
+    echo -e "${DIM}Your name and email will be used for git commits.${NC}"
+    echo ""
+  fi
+
+  if [ -z "$current_name" ]; then
+    if [ "$HAS_GUM" = true ]; then
+      current_name=$(gum input --placeholder "Your Name" --header "Git user name")
+    else
+      read -p "  Git user name: " current_name
+    fi
+    [ -n "$current_name" ] && git config -f "$gitconfig" user.name "$current_name"
+  fi
+
+  if [ -z "$current_email" ]; then
+    if [ "$HAS_GUM" = true ]; then
+      current_email=$(gum input --placeholder "you@example.com" --header "Git email")
+    else
+      read -p "  Git email: " current_email
+    fi
+    [ -n "$current_email" ] && git config -f "$gitconfig" user.email "$current_email"
+  fi
+}
+
+# ── Sync dotfiles ────────────────────────────────────────────────────────────
+
+syncDotfiles() {
   rsync_output=$(rsync --exclude ".git/" \
     --exclude ".DS_Store" \
     --exclude ".osx" \
     --exclude "bootstrap.sh" \
     --exclude "README.md" \
-    --exclude "LICENSE-MIT.txt" \
-    -avh --no-perms . ~)
+    --exclude "CLAUDE.md" \
+    --exclude ".claude/" \
+    --exclude "scripts/" \
+    --exclude "zsh/" \
+    --exclude "neovim/" \
+    --exclude "vscode/" \
+    --exclude "install.sh" \
+    --exclude "update_dotfiles.sh" \
+    --exclude "dotfiles" \
+    --exclude "Makefile" \
+    --exclude "LICENSE" \
+    --exclude ".github/" \
+    -avh --no-perms . ~ 2>/dev/null) || true
 
   if [ -n "$rsync_output" ]; then
-    echo "✨ Dotfiles have been updated. Sourcing .bash_profile to apply changes..."
-    source ~/.bash_profile
-  else
-    echo "✅ No changes detected in dotfiles. Skipping sourcing of .bash_profile."
+    source ~/.bash_profile 2>/dev/null || true
   fi
 }
 
-# Function to install system dependencies only if not already installed
-function installSystemDependencies() {
-  # Dotfiles directory
-  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# ── Component definitions ────────────────────────────────────────────────────
 
-  # Run install_system_dependencies.sh script if it exists and is executable
-  if [ -f "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ] && [ -x "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ]; then
-    echo "🔍 Checking and installing necessary system dependencies..."
-    "$DOTFILES_DIR/scripts/install_system_dependencies.sh"
-  else
-    echo "⚠️ System dependencies script not found or not executable. Skipping system dependency installation."
-  fi
+COMPONENTS=(
+  "System Dependencies"
+  "Python Tools (pipx)"
+  "Dotfiles Sync"
+  "Zsh + Starship"
+  "Neovim"
+  "VS Code"
+  "Claude Code"
+)
+
+# macOS-only component
+if [ "$(uname -s)" = "Darwin" ]; then
+  COMPONENTS+=("macOS Preferences")
+fi
+
+# Map component name to function
+run_component_by_name() {
+  local name="$1"
+  case "$name" in
+    "System Dependencies")  run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/install_system_dependencies.sh" ;;
+    "Python Tools (pipx)")  run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ;;
+    "Dotfiles Sync")        print_step "$STEP" "$TOTAL" "$name"; syncDotfiles; print_success "Done" ;;
+    "Zsh + Starship")       run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/zsh/install.sh" ;;
+    "Neovim")               run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/neovim/install.sh" ;;
+    "VS Code")              run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/vscode/install.sh" ;;
+    "Claude Code")          run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/.claude/install.sh" ;;
+    "macOS Preferences")    run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/scripts/macos.sh" ;;
+  esac
 }
 
-# Function to install pipx-managed dependencies only if not already installed
-function installPipxDependencies() {
-  # Dotfiles directory
-  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# ── Main ─────────────────────────────────────────────────────────────────────
 
-  # Run install_pipx_dependencies.sh script if it exists and is executable
-  if [ -f "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ] && [ -x "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh" ]; then
-    echo "📦 Checking and installing pipx-managed dependencies..."
-    "$DOTFILES_DIR/scripts/install_pipx_dependencies.sh"
-  else
-    echo "⚠️ Pipx dependencies script not found or not executable. Skipping pipx dependency installation."
-  fi
-}
+print_banner "Dotfiles" "Development environment setup"
 
-# Function to install Zsh configurations only if necessary
-function installZsh() {
-  # Dotfiles directory
-  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Update from remote
+git pull origin main 2>/dev/null || print_warning "Could not pull from remote"
 
-  # Run zsh install script if it exists and is executable
-  if [ -f "$DOTFILES_DIR/zsh/install.sh" ] && [ -x "$DOTFILES_DIR/zsh/install.sh" ]; then
-    echo "🔧 Installing Zsh configurations..."
-    "$DOTFILES_DIR/zsh/install.sh"
-  else
-    echo "⚠️ zsh/install.sh not found or not executable. Skipping Zsh setup."
-  fi
-}
+# Configure git identity
+configure_git_identity
 
-# Function to install VS Code configurations only if necessary
-function installVSCode() {
-  # Dotfiles directory
-  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TOTAL_START=$(date +%s)
 
-  # Run vscode install script if it exists and is executable
-  if [ -f "$DOTFILES_DIR/vscode/install.sh" ] && [ -x "$DOTFILES_DIR/vscode/install.sh" ]; then
-    echo "🖥️ Installing VS Code configurations..."
-    "$DOTFILES_DIR/vscode/install.sh"
-  else
-    echo "⚠️ vscode/install.sh not found or not executable. Skipping VS Code setup."
-  fi
-}
-
-# Function to install Neovim and its configurations
-function installNeovim() {
-  # Dotfiles directory
-  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-  # Run neovim install script if it exists and is executable
-  if [ -f "$DOTFILES_DIR/neovim/install.sh" ] && [ -x "$DOTFILES_DIR/neovim/install.sh" ]; then
-    echo "📝 Installing Neovim and its configurations..."
-    "$DOTFILES_DIR/neovim/install.sh"
-  else
-    echo "⚠️ neovim/install.sh not found or not executable. Skipping Neovim setup."
-  fi
-}
-
-# Function to install Claude Code configurations
-function installClaudeCode() {
-  # Dotfiles directory
-  DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-  # Run Claude Code install script if it exists and is executable
-  if [ -f "$DOTFILES_DIR/.claude/install.sh" ] && [ -x "$DOTFILES_DIR/.claude/install.sh" ]; then
-    echo "🤖 Installing Claude Code configurations..."
-    "$DOTFILES_DIR/.claude/install.sh"
-  else
-    echo "⚠️ .claude/install.sh not found or not executable. Skipping Claude Code setup."
-  fi
-}
-
-# Main execution logic
-if [ "$1" = "--force" -o "$1" = "-f" ]; then
-  installSystemDependencies
-  installPipxDependencies
-  syncDotfiles
-  installZsh
-  installVSCode
-  installNeovim
-  installClaudeCode
+if [[ "$1" == "--force" || "$1" == "-f" ]]; then
+  # Force mode: install everything
+  selected=("${COMPONENTS[@]}")
+  echo ""
+  print_info "Force mode: installing all components"
 else
-  read -p "🔄 Do you want to install system dependencies? (y/n) " -n 1
-  echo ""
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    installSystemDependencies
-  fi
+  # Interactive mode: let user pick
+  select_components "Select components to install:" "${COMPONENTS[@]}"
+  selected=("${SELECTED_COMPONENTS[@]}")
 
-  read -p "📦 Do you want to install pipx dependencies? (y/n) " -n 1
-  echo ""
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    installPipxDependencies
-  fi
-
-  read -p "🔄 Do you want to sync your dotfiles? (y/n) " -n 1
-  echo ""
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    syncDotfiles
-  fi
-
-  read -p "🔧 Do you want to install Zsh configurations? (y/n) " -n 1
-  echo ""
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    installZsh
-  fi
-
-  read -p "🖥️ Do you want to install VS Code configurations? (y/n) " -n 1
-  echo ""
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    installVSCode
-  fi
-
-  read -p "📝 Do you want to install Neovim and its configurations? (y/n) " -n 1
-  echo ""
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    installNeovim
-  fi
-
-  read -p "🤖 Do you want to install Claude Code configurations? (y/n) " -n 1
-  echo ""
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    installClaudeCode
+  if [ ${#selected[@]} -eq 0 ]; then
+    echo ""
+    print_warning "No components selected. Nothing to do."
+    exit 0
   fi
 fi
 
-# Unset functions to clean up the environment
-unset syncDotfiles
-unset installSystemDependencies
-unset installPipxDependencies
-unset installZsh
-unset installVSCode
-unset installNeovim
-unset installClaudeCode
+# Run selected components
+TOTAL=${#selected[@]}
+STEP=0
+succeeded=()
+failed=()
+skipped=()
 
-echo "🎉 All tasks completed! Your environment is now set up and ready to use."
+for comp in "${selected[@]}"; do
+  ((STEP++))
+  if run_component_by_name "$comp"; then
+    succeeded+=("$comp")
+  else
+    failed+=("$comp")
+  fi
+done
+
+# Mark unselected as skipped
+for comp in "${COMPONENTS[@]}"; do
+  local_found=false
+  for sel in "${selected[@]}"; do
+    [[ "$comp" == "$sel" ]] && local_found=true && break
+  done
+  [[ "$local_found" == false ]] && skipped+=("$comp")
+done
+
+# ── Symlink `dotfiles` CLI onto PATH ─────────────────────────────────────────
+
+link_dotfiles_cli() {
+  local target="$DOTFILES_DIR/dotfiles"
+  local link_dir="$HOME/.local/bin"
+  local link_path="$link_dir/dotfiles"
+
+  mkdir -p "$link_dir"
+  if [ ! -L "$link_path" ] || [ "$(readlink "$link_path")" != "$target" ]; then
+    ln -sf "$target" "$link_path"
+    print_success "dotfiles CLI linked to $link_path"
+  fi
+}
+
+link_dotfiles_cli
+
+# ── Summary ──────────────────────────────────────────────────────────────────
+
+TOTAL_ELAPSED=$(( $(date +%s) - TOTAL_START ))
+
+echo ""
+echo ""
+if [ "$HAS_GUM" = true ]; then
+  gum style \
+    --border rounded \
+    --border-foreground 99 \
+    --padding "0 2" \
+    --margin "0 0" \
+    "Setup Complete (${TOTAL_ELAPSED}s)"
+else
+  echo -e "${BOLD}── Setup Complete (${TOTAL_ELAPSED}s) ──${NC}"
+fi
+
+echo ""
+for comp in "${succeeded[@]}"; do
+  print_success "$comp"
+done
+for comp in "${failed[@]}"; do
+  print_error "$comp"
+done
+for comp in "${skipped[@]}"; do
+  echo -e "  ${GRAY}– $comp (skipped)${NC}"
+done
+
+echo ""
+if [ ${#failed[@]} -eq 0 ]; then
+  print_info "Restart your terminal or run: ${BOLD}source ~/.zshrc${NC}"
+else
+  print_warning "${#failed[@]} component(s) had errors. Check output above."
+fi
+echo ""

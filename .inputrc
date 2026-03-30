@@ -1,0 +1,34 @@
+# Make Tab autocomplete regardless of filename case
+set completion-ignore-case on
+
+# List all matches in case multiple possible completions are possible
+set show-all-if-ambiguous on
+
+# Show all completions at once instead of paging
+set page-completions off
+
+# Immediately add a trailing slash when autocompleting symlinks to directories
+set mark-symlinked-directories on
+
+# Show extra file information when completing, like `ls -F` does
+set visible-stats on
+
+# Color files by types when completing
+set colored-stats on
+
+# Be more intelligent when autocompleting by also looking at the text after
+# the cursor
+set skip-completed-text on
+
+# Allow UTF-8 input and output
+set input-meta on
+set output-meta on
+set convert-meta off
+
+# Use the text that has already been typed as the prefix for searching through
+# commands (i.e. up/down arrows filter history by current input)
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
+# Use Alt/Meta + Delete to delete the preceding word
+"\e[3;3~": kill-word

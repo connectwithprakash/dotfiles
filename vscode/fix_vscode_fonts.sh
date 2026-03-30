@@ -1,7 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -e
 
 # Define the font directory and font files
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FONT_DIR="$SCRIPT_DIR/fonts"
 FONT_FILES=(
   "MesloLGS NF Regular.ttf"
@@ -12,8 +14,8 @@ FONT_FILES=(
 
 # Check if the font directory exists
 if [ ! -d "$FONT_DIR" ]; then
-  echo "The font directory $FONT_DIR does not exist. Please make sure the fonts are in the correct directory."
-  exit 1
+  echo "The font directory $FONT_DIR does not exist. Skipping font installation."
+  exit 0
 fi
 
 # Function to check if a command exists
@@ -21,18 +23,12 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-# Check if 'sed' command is available
-if ! command_exists sed; then
-  echo "The 'sed' command is required but is not installed. Please install it and try again."
-  exit 1
-fi
-
 # Install the fonts
 echo "Installing fonts from $FONT_DIR..."
-mkdir -p ~/Library/Fonts
+mkdir -p "$HOME/Library/Fonts"
 for font_file in "${FONT_FILES[@]}"; do
   if [ -f "$FONT_DIR/$font_file" ]; then
-    cp "$FONT_DIR/$font_file" ~/Library/Fonts/
+    cp "$FONT_DIR/$font_file" "$HOME/Library/Fonts/"
     echo "Installed $font_file"
   else
     echo "$font_file does not exist in $FONT_DIR. Skipping..."
@@ -40,43 +36,27 @@ for font_file in "${FONT_FILES[@]}"; do
 done
 
 # Check if VSCode is installed
-if ! command -v code &> /dev/null; then
-  echo "VSCode is not installed. Please install VSCode first."
-  exit 1
+if ! command_exists code; then
+  echo "VSCode is not installed. Skipping settings configuration."
+  exit 0
 fi
 
-# Configure VSCode settings
+# Configure VSCode settings using jq (proper JSON handling)
 echo "Configuring VSCode terminal font..."
 
-# Create a settings file for VSCode if it doesn't exist
 SETTINGS_FILE="$HOME/Library/Application Support/Code/User/settings.json"
 if [ ! -f "$SETTINGS_FILE" ]; then
   mkdir -p "$(dirname "$SETTINGS_FILE")"
-  echo "{}" > "$SETTINGS_FILE"
+  echo '{}' > "$SETTINGS_FILE"
 fi
 
-# Remove all existing entries of "terminal.integrated.fontFamily"
-sed -i '' '/"terminal.integrated.fontFamily":/d' "$SETTINGS_FILE"
-
-# Add or update the terminal font family setting in VSCode
-# Add the new setting before the closing curly brace
-if grep -q '^}$' "$SETTINGS_FILE"; then
-  sed -i '' -e '$i\
-  ,\
-  "terminal.integrated.fontFamily": "MesloLGS NF"' "$SETTINGS_FILE"
+if command_exists jq; then
+  # Use jq for safe JSON manipulation
+  jq '. + {"terminal.integrated.fontFamily": "MesloLGS NF"}' "$SETTINGS_FILE" > "${SETTINGS_FILE}.tmp" \
+    && mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
+  echo "VSCode terminal font set to 'MesloLGS NF' via jq."
 else
-  # If there are multiple lines, ensure proper JSON formatting
-  sed -i '' -e '$a\
-  ,\
-  "terminal.integrated.fontFamily": "MesloLGS NF"' "$SETTINGS_FILE"
+  echo "Warning: jq not found. Please manually set terminal.integrated.fontFamily to 'MesloLGS NF' in VS Code settings."
 fi
 
-# Notify the user
-echo "Fonts installed and VSCode terminal font set to 'MesloLGS NF'. Please restart VSCode for changes to take effect."
-
-# Open VSCode to show the settings file
-echo "Opening VSCode settings.json..."
-if ! code "$SETTINGS_FILE"; then
-  echo "Failed to open VSCode settings file. Please open $SETTINGS_FILE manually."
-fi
-
+echo "Fonts installed. Please restart VSCode for changes to take effect."

@@ -9,46 +9,39 @@ set -e
 DOTFILES_CLAUDE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GLOBAL_CLAUDE_DIR="$HOME/.claude"
 
-# Function to check if a file exists
-file_exists() {
-  [ -f "$1" ]
-}
+# Source shared library
+DOTFILES_ROOT="$(cd "$DOTFILES_CLAUDE_DIR/.." && pwd)"
+if [ -f "$DOTFILES_ROOT/scripts/lib.sh" ]; then
+  source "$DOTFILES_ROOT/scripts/lib.sh"
+else
+  # Minimal fallback if lib.sh not available
+  command_exists() { command -v "$1" >/dev/null 2>&1; }
+  prompt_yes_no() {
+    while true; do
+      read -p "$1 (y/n): " yn
+      case $yn in [Yy]* ) return 0;; [Nn]* ) return 1;; * ) echo "Please answer yes or no.";; esac
+    done
+  }
+  backup_file() { :; }
+fi
 
-# Function to check if a directory exists
-dir_exists() {
-  [ -d "$1" ]
-}
+# Helper functions
+file_exists() { [ -f "$1" ]; }
+dir_exists() { [ -d "$1" ]; }
 
-# Function to show diff between files
 show_diff() {
-  local file1=$1
-  local file2=$2
-  local label1=$3
-  local label2=$4
-
+  local file1="$1" file2="$2" label1="$3" label2="$4"
   if file_exists "$file1" && file_exists "$file2"; then
     if ! diff -q "$file1" "$file2" >/dev/null; then
-      echo "🔍 Differences in: $(basename "$file1")"
+      echo "Differences in: $(basename "$file1")"
       echo "---------------------------------"
-      echo "📁 $label1: $file1"
-      echo "📁 $label2: $file2"
+      echo "$label1: $file1"
+      echo "$label2: $file2"
       echo ""
       diff -u "$file1" "$file2" || true
       echo ""
     fi
   fi
-}
-
-# Function to prompt yes/no
-prompt_yes_no() {
-  while true; do
-    read -p "$1 (y/n): " yn
-    case $yn in
-      [Yy]* ) return 0;;
-      [Nn]* ) return 1;;
-      * ) echo "❗ Please answer yes or no.";;
-    esac
-  done
 }
 
 # Function to sync from repository to global (~/.claude/)

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Add custom PATH entries here.
+# This file is sourced by .bash_profile and is not committed to the repository
+# by default. Use it for machine-specific PATH additions.
+
+# Example:
+# export PATH="$HOME/go/bin:$PATH"
+# export PATH="$HOME/.cargo/bin:$PATH"

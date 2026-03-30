@@ -1,8 +1,37 @@
+[user]
+	# These are set during bootstrap; override locally with:
+	#   git config --local user.name "Your Name"
+	#   git config --local user.email "you@example.com"
+	name =
+	email =
+
 [alias]
 	co = checkout
 	br = branch
 	ci = commit
 	st = status
-[user]
-	name = Prakash Chaudhary
-	email = connectwithprakash@gmail.com
+	lg = log --oneline --graph --decorate --all
+	df = diff --color
+	last = log -1 HEAD
+	unstage = reset HEAD --
+
+[core]
+	autocrlf = input
+	safecrlf = warn
+	editor = nvim
+	excludesfile = ~/.gitignore
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = false
+
+[push]
+	autoSetupRemote = true
+
+[color]
+	ui = auto
+
+[diff]
+	colorMoved = default

@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -e
 
 # Function to check if a command exists
 command_exists() {
@@ -15,15 +17,9 @@ uninstall_oh_my_zsh() {
     echo "Oh My Zsh is not installed."
   fi
 
-  if [ -f "$HOME/.zshrc" ]; then
-    echo "Removing .zshrc..."
-    rm -f "$HOME/.zshrc"
-  fi
-  
-  if [ -f "$HOME/.p10k.zsh" ]; then
-    echo "Removing .p10k.zsh..."
-    rm -f "$HOME/.p10k.zsh"
-  fi
+  [ -f "$HOME/.zshrc" ] && rm -f "$HOME/.zshrc" && echo "Removed .zshrc"
+  [ -f "$HOME/.p10k.zsh" ] && rm -f "$HOME/.p10k.zsh" && echo "Removed legacy .p10k.zsh"
+  [ -f "$HOME/.config/starship.toml" ] && rm -f "$HOME/.config/starship.toml" && echo "Removed starship.toml"
 }
 
 # Function to uninstall Zsh
@@ -31,12 +27,12 @@ uninstall_zsh() {
   if command_exists zsh; then
     echo "Uninstalling Zsh..."
     if command_exists brew; then
-      brew uninstall zsh
+      brew uninstall zsh || true
     elif command_exists apt-get; then
       sudo apt-get remove --purge -y zsh
     else
       echo "Package manager not supported. Please uninstall Zsh manually."
-      exit 1
+      return 1
     fi
     echo "Zsh has been uninstalled."
   else
@@ -54,36 +50,46 @@ change_default_shell() {
   fi
 }
 
-# Function to remove Zsh-related files and directories
+# Function to remove Zsh-related files (NOT ~/.cache which belongs to many apps)
 remove_zsh_files() {
-  echo "Removing Zsh-related files and directories..."
-  rm -rf "$HOME/.zsh_history"
-  rm -rf "$HOME/.zshenv"
-  rm -rf "$HOME/.zlogin"
-  rm -rf "$HOME/.zlogout"
+  echo "Removing Zsh-related files..."
+  rm -f "$HOME/.zsh_history"
+  rm -f "$HOME/.zshenv"
+  rm -f "$HOME/.zlogin"
+  rm -f "$HOME/.zlogout"
   rm -rf "$HOME/.zsh"
   rm -rf "$HOME/.zshrc.d"
-  rm -rf "$HOME/.cache"
+  # Only remove zsh-specific cache, not the entire ~/.cache
+  rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-"*
+  rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 }
 
-# Function to remove Zsh plugins and themes directories
-remove_plugins_and_themes() {
-  echo "Removing Zsh plugins and themes directories..."
-  rm -rf "$HOME/.oh-my-zsh/custom/plugins"
-  rm -rf "$HOME/.oh-my-zsh/custom/themes"
-  rm -rf "$HOME/.oh-my-zsh/custom"
+# Remove 'exec zsh' from .bashrc if present
+cleanup_bashrc() {
+  if [ -f "$HOME/.bashrc" ] && grep -q "exec zsh" "$HOME/.bashrc"; then
+    # Portable sed -i: macOS requires '' arg, GNU doesn't
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+      sed -i '' '/exec zsh/d' "$HOME/.bashrc"
+    else
+      sed -i '/exec zsh/d' "$HOME/.bashrc"
+    fi
+    echo "Removed 'exec zsh' from .bashrc"
+  fi
 }
 
-# Main function to execute all steps
-main() {
-  uninstall_oh_my_zsh
-  uninstall_zsh
-  change_default_shell
-  remove_zsh_files
-  remove_plugins_and_themes
+# Main
+echo "This will uninstall Zsh, Oh My Zsh, and all related configurations."
+read -p "Are you sure? (y/n): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  echo "Aborted."
+  exit 0
+fi
 
-  echo "Uninstallation complete. Please restart your terminal or open a new terminal window."
-}
+uninstall_oh_my_zsh
+change_default_shell
+remove_zsh_files
+cleanup_bashrc
+uninstall_zsh
 
-# Run the main function
-main
+echo "Uninstallation complete. Please restart your terminal."

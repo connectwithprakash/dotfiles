@@ -1,87 +1,83 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Define root directory where update_dotfiles.sh script resides
-ROOT_DIR=$(dirname "$(realpath "$0")")
+set -e
+
+# Define root directory (portable, no realpath needed)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source shared library
+source "$ROOT_DIR/scripts/lib.sh"
 
 # Ensure root directory exists
 if [ ! -d "$ROOT_DIR" ]; then
-  echo "❌ Root directory '$ROOT_DIR' not found."
+  echo "Root directory '$ROOT_DIR' not found."
   exit 1
 fi
-
-# Check if gum is available
-HAS_GUM=false
-if command -v gum &> /dev/null; then
-  HAS_GUM=true
-fi
-
-# Function to prompt user with yes/no question
-prompt_yes_no() {
-  if [ "$HAS_GUM" = true ]; then
-    gum confirm "$1"
-    return $?
-  else
-    while true; do
-      read -p "$1 (y/n): " yn
-      case $yn in
-        [Yy]* ) return 0;;  # User answered yes
-        [Nn]* ) return 1;;  # User answered no
-        * ) echo "❗ Please answer yes or no.";;
-      esac
-    done
-  fi
-}
 
 # List dot files in the project structure
 dotfiles=(
   ".aliases"
   ".bash_profile"
+  ".bash_prompt"
+  ".editorconfig"
+  ".exports"
+  ".functions"
   ".gitconfig"
   ".gitignore"
+  ".inputrc"
+  ".tmux.conf"
   ".vimrc"
 )
 
 # Additional dot files inside zsh directory with their relative paths
 zsh_dotfiles=(
-  "zsh/.p10k.zsh"
-  # "zsh/.zsh_history"
   "zsh/.zshrc"
+  "zsh/starship.toml"
 )
+
+# Map repo path to home path (handles special cases)
+get_home_path() {
+  local file="$1"
+  local home_file="${file#zsh/}"
+  case "$home_file" in
+    starship.toml) echo "$HOME/.config/starship.toml" ;;
+    *) echo "$HOME/$home_file" ;;
+  esac
+}
 
 # Function to show differences in files
 show_diff() {
-  local file=$1
+  local file="$1"
   local repo_path="$ROOT_DIR/$file"
-  local home_file="${file#zsh/}"  # Remove "zsh/" prefix if present
-  local home_path="$HOME/$home_file"
+  local home_path
+  home_path="$(get_home_path "$file")"
 
-  # Check if files are different
   if ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
     if [ "$HAS_GUM" = true ]; then
-      gum style --border rounded --border-foreground 212 --padding "0 1" "🔍 Differences in: $home_file"
+      gum style --border rounded --border-foreground 212 --padding "0 1" "Differences in: $home_file"
       echo ""
-      echo "📂 Home: $home_path"
-      echo "📁 Repo: $repo_path"
+      echo "Home: $home_path"
+      echo "Repo: $repo_path"
       echo ""
     else
-      echo "🔍 Differences in dotfile: $home_file"
+      echo "Differences in dotfile: $home_file"
       echo "---------------------------------"
-      echo "📂 File path in home directory: $home_path"
-      echo "📁 File path in dotfiles repo: $repo_path"
+      echo "File path in home directory: $home_path"
+      echo "File path in dotfiles repo: $repo_path"
       echo ""
     fi
 
-    diff -u "$home_path" "$repo_path"
+    diff -u "$home_path" "$repo_path" || true
     echo ""
   fi
 }
 
 # Function to sync files from home directory to repo
 sync_to_repo() {
-  local file=$1
+  local file="$1"
   local repo_path="$ROOT_DIR/$file"
-  local home_file="${file#zsh/}"  # Remove "zsh/" prefix if present
-  local home_path="$HOME/$home_file"
+  local home_path
+  home_path="$(get_home_path "$file")"
 
   if [ -f "$home_path" ]; then
     if ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
@@ -90,29 +86,30 @@ sync_to_repo() {
         gum spin --spinner dot --title "Syncing $home_file..." -- sleep 0.2
       fi
       cp "$home_path" "$repo_path"
-      echo "✅ Synced $home_file to repository"
+      echo "Synced $home_file to repository"
     else
-      echo "⚠️  No changes in $home_file (skipped)"
+      echo "No changes in $home_file (skipped)"
     fi
   fi
 }
 
 # Function to sync files from repo to home directory
 sync_to_home() {
-  local file=$1
+  local file="$1"
   local repo_path="$ROOT_DIR/$file"
-  local home_file="${file#zsh/}"  # Remove "zsh/" prefix if present
-  local home_path="$HOME/$home_file"
+  local home_path
+  home_path="$(get_home_path "$file")"
 
   if [ -f "$repo_path" ]; then
     if ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
+      backup_file "$home_path"
       if [ "$HAS_GUM" = true ]; then
         gum spin --spinner dot --title "Syncing $home_file..." -- sleep 0.2
       fi
       cp "$repo_path" "$home_path"
-      echo "✅ Synced $home_file to home directory"
+      echo "Synced $home_file to home directory"
     else
-      echo "⚠️  No changes in $home_file (skipped)"
+      echo "No changes in $home_file (skipped)"
     fi
   fi
 }
@@ -125,28 +122,28 @@ prompt_sync_direction() {
       --border-foreground 212 \
       --padding "1 2" \
       --margin "1 0" \
-      "🔄 Dotfiles Sync Manager" \
+      "Dotfiles Sync Manager" \
       "" \
       "Choose your sync direction:"
 
     DIRECTION=$(gum choose \
-      "🏠 ➡️  📁  Home → Repository" \
-      "📁 ➡️  🏠  Repository → Home")
+      "Home -> Repository" \
+      "Repository -> Home")
 
     case "$DIRECTION" in
-      *"Home → Repository"*) sync_home_to_repo;;
-      *"Repository → Home"*) sync_repo_to_home;;
+      *"Home -> Repository"*) sync_home_to_repo;;
+      *"Repository -> Home"*) sync_repo_to_home;;
     esac
   else
-    echo "🌟✨ Choose Your Sync Direction ✨🌟"
-    echo "1) Home to Repository 🏠➡️📁"
-    echo "2) Repository to Home 📁➡️🏠"
+    echo "Choose Your Sync Direction"
+    echo "1) Home to Repository"
+    echo "2) Repository to Home"
     while true; do
       read -p "Enter your choice (1/2): " direction
       case $direction in
         1 ) sync_home_to_repo; break;;
         2 ) sync_repo_to_home; break;;
-        * ) echo "❗ Please choose '1' for Home to Repository or '2' for Repository to Home.";;
+        * ) echo "Please choose '1' for Home to Repository or '2' for Repository to Home.";;
       esac
     done
   fi
@@ -154,12 +151,11 @@ prompt_sync_direction() {
 
 # Function to check if a file has changes
 check_file_status() {
-  local file=$1
+  local file="$1"
   local repo_path="$ROOT_DIR/$file"
-  local home_file="${file#zsh/}"  # Remove "zsh/" prefix if present
-  local home_path="$HOME/$home_file"
+  local home_path
+  home_path="$(get_home_path "$file")"
 
-  # Check if both files exist and compare
   if [ -f "$home_path" ] && [ -f "$repo_path" ]; then
     if diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
       echo "unchanged"
@@ -167,7 +163,7 @@ check_file_status() {
       echo "modified"
     fi
   elif [ -f "$home_path" ] || [ -f "$repo_path" ]; then
-    echo "modified"  # One exists but not the other
+    echo "modified"
   else
     echo "missing"
   fi
@@ -186,72 +182,43 @@ prompt_select_dotfiles() {
       --margin "0" \
       "Select Dotfiles to Sync" \
       "" \
-      "● = modified  |  ○ = unchanged"
+      "* = modified  |  - = unchanged"
 
     echo ""
 
-    # Build selection list with status indicators and grouping
+    # Build selection list with status indicators
     selection_list=()
 
-    # Add root dotfiles with header
-    if [ ${#dotfiles[@]} -gt 0 ]; then
-      selection_list+=("━━━ Root Configuration ━━━")
-      for file in "${dotfiles[@]}"; do
-        status=$(check_file_status "$file")
-        if [ "$status" = "modified" ]; then
-          selection_list+=("● $file")
-        else
-          selection_list+=("○ $file")
-        fi
-      done
-    fi
-
-    # Add zsh dotfiles with header
-    if [ ${#zsh_dotfiles[@]} -gt 0 ]; then
-      selection_list+=("")
-      selection_list+=("━━━ Zsh Configuration ━━━")
-      for file in "${zsh_dotfiles[@]}"; do
-        status=$(check_file_status "$file")
-        if [ "$status" = "modified" ]; then
-          selection_list+=("● $file")
-        else
-          selection_list+=("○ $file")
-        fi
-      done
-    fi
-
-    # Debug: Show what we're sending to gum choose
-    echo "DEBUG: Selection list has ${#selection_list[@]} items:" >&2
-    for item in "${selection_list[@]}"; do
-      echo "DEBUG:   '$item'" >&2
+    for file in "${dotfiles[@]}" "${zsh_dotfiles[@]}"; do
+      status=$(check_file_status "$file")
+      if [ "$status" = "modified" ]; then
+        selection_list+=("* $file")
+      else
+        selection_list+=("- $file")
+      fi
     done
-    echo "DEBUG: ---" >&2
 
-    # Use gum choose with multi-select - pass options as arguments, not stdin!
     while IFS= read -r line; do
-      # Skip empty lines and headers, extract filename
-      if [[ "$line" == ●\ * ]] || [[ "$line" == ○\ * ]]; then
-        file="${line#● }"
-        file="${file#○ }"
+      if [[ "$line" == \*\ * ]] || [[ "$line" == -\ * ]]; then
+        file="${line#\* }"
+        file="${file#- }"
         selected_dotfiles+=("$file")
       fi
     done < <(gum choose --no-limit --height 20 "${selection_list[@]}")
 
-    echo "DEBUG: Total selected: ${#selected_dotfiles[@]}" >&2
-
     if [ ${#selected_dotfiles[@]} -eq 0 ]; then
-      echo "❌ No dotfiles selected. Aborting."
+      echo "No dotfiles selected. Aborting."
       exit 0
     fi
   else
     for file in "${dotfiles[@]}" "${zsh_dotfiles[@]}"; do
-      if prompt_yes_no "🔄 Do you want to sync $file?"; then
+      if prompt_yes_no "Do you want to sync $file?"; then
         selected_dotfiles+=("$file")
       fi
     done
 
     if [ ${#selected_dotfiles[@]} -eq 0 ]; then
-      echo "❌ No dotfiles selected. Aborting."
+      echo "No dotfiles selected. Aborting."
       exit 0
     fi
   fi
@@ -259,111 +226,69 @@ prompt_select_dotfiles() {
 
 # Sync dotfiles from home directory to repository
 sync_home_to_repo() {
-  # Prompt user to select specific dotfiles
   prompt_select_dotfiles
 
   echo ""
-  if [ "$HAS_GUM" = true ]; then
-    gum style --foreground 212 "📋 Selected ${#selected_dotfiles[@]} file(s) for sync"
-  else
-    echo "📋 Selected ${#selected_dotfiles[@]} file(s) for sync"
-  fi
+  echo "Selected ${#selected_dotfiles[@]} file(s) for sync"
   echo ""
 
-  # Prompt user if they want to see the changes before syncing
-  if prompt_yes_no "👀 Preview changes before syncing?"; then
-    # Show differences for selected dotfiles
+  if prompt_yes_no "Preview changes before syncing?"; then
     for file in "${selected_dotfiles[@]}"; do
       show_diff "$file"
     done
 
-    # Prompt user to confirm sync
-    if prompt_yes_no "🔄 Proceed with sync?"; then
+    if prompt_yes_no "Proceed with sync?"; then
       echo ""
-      # Sync selected dotfiles from home directory to repo
       for file in "${selected_dotfiles[@]}"; do
         sync_to_repo "$file"
       done
-
       echo ""
-      if [ "$HAS_GUM" = true ]; then
-        gum style --foreground 212 --bold "🎉 Sync complete! Files updated in repository."
-      else
-        echo "🎉 Dotfiles synced successfully to repository."
-      fi
+      echo "Sync complete! Files updated in repository."
     else
-      echo "❌ Sync aborted."
+      echo "Sync aborted."
     fi
   else
     echo ""
-    # Sync selected dotfiles without showing differences
     for file in "${selected_dotfiles[@]}"; do
       sync_to_repo "$file"
     done
-
     echo ""
-    if [ "$HAS_GUM" = true ]; then
-      gum style --foreground 212 --bold "🎉 Sync complete! Files updated in repository."
-    else
-      echo "🎉 Dotfiles synced successfully to repository."
-    fi
+    echo "Sync complete! Files updated in repository."
   fi
 }
 
 # Sync dotfiles from repository to home directory
 sync_repo_to_home() {
-  # Prompt user to select specific dotfiles
   prompt_select_dotfiles
 
   echo ""
-  if [ "$HAS_GUM" = true ]; then
-    gum style --foreground 212 "📋 Selected ${#selected_dotfiles[@]} file(s) for sync"
-  else
-    echo "📋 Selected ${#selected_dotfiles[@]} file(s) for sync"
-  fi
+  echo "Selected ${#selected_dotfiles[@]} file(s) for sync"
   echo ""
 
-  # Prompt user if they want to see the changes before syncing
-  if prompt_yes_no "👀 Preview changes before syncing?"; then
-    # Show differences for selected dotfiles
+  if prompt_yes_no "Preview changes before syncing?"; then
     for file in "${selected_dotfiles[@]}"; do
       show_diff "$file"
     done
 
-    # Prompt user to confirm sync
-    if prompt_yes_no "🔄 Proceed with sync?"; then
+    if prompt_yes_no "Proceed with sync?"; then
       echo ""
-      # Sync selected dotfiles from repo to home directory
       for file in "${selected_dotfiles[@]}"; do
         sync_to_home "$file"
       done
-
       echo ""
-      if [ "$HAS_GUM" = true ]; then
-        gum style --foreground 212 --bold "🎉 Sync complete! Files updated in home directory."
-      else
-        echo "🎉 Dotfiles synced successfully to home directory."
-      fi
+      echo "Sync complete! Files updated in home directory."
     else
-      echo "❌ Sync aborted."
+      echo "Sync aborted."
     fi
   else
     echo ""
-    # Sync selected dotfiles without showing differences
     for file in "${selected_dotfiles[@]}"; do
       sync_to_home "$file"
     done
-
     echo ""
-    if [ "$HAS_GUM" = true ]; then
-      gum style --foreground 212 --bold "🎉 Sync complete! Files updated in home directory."
-    else
-      echo "🎉 Dotfiles synced successfully to home directory."
-    fi
+    echo "Sync complete! Files updated in home directory."
   fi
 }
 
 # Main script starts here
-
-# Prompt user for sync direction
 prompt_sync_direction

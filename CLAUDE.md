@@ -1,263 +1,135 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Repository Overview
 
-This is a personal dotfiles repository for managing development environment configurations across macOS systems. It handles setup and synchronization of shell configurations (Bash/Zsh), editor configurations (Neovim, VS Code), and system dependencies.
+Personal dotfiles repository for managing development environment configurations across macOS systems (with partial Linux support). Handles setup and synchronization of shell configs (Bash/Zsh), editor configs (Neovim, VS Code), tmux, system dependencies, and macOS preferences.
 
 ## Core Architecture
 
 ### Bidirectional Sync Model
 
-The repository uses a **bidirectional sync architecture** between the home directory (`~`) and the repository:
+- **Home -> Repository**: `update_dotfiles.sh` syncs changes from `~` to repo for version control
+- **Repository -> Home**: `bootstrap.sh` / `update_dotfiles.sh` deploys configs from repo to `~`
+- Files are backed up to `~/.dotfiles-backup/` before overwriting
 
-- **Home → Repository**: `update_dotfiles.sh` - Sync changes from `~` to the repo for version control
-- **Repository → Home**: `bootstrap.sh` - Deploy configurations from repo to `~` during setup/updates
+### Shared Library
+
+`scripts/lib.sh` provides common functions used across all scripts:
+- `command_exists`, `prompt_yes_no`, `backup_file`
+- Color output helpers (`print_success`, `print_error`, `print_info`, `print_warning`)
+- Portable Homebrew detection (`get_brew_prefix`, `ensure_brew_in_path`)
 
 ### Managed Dotfiles
 
-**Root-level dotfiles** (synced via rsync):
-- `.bash_profile` - Bash configuration, loads other dotfiles dynamically
-- `.aliases` - Shell aliases for navigation, system commands, Python
-- `.gitconfig`, `.gitignore`, `.vimrc`
+**Root-level dotfiles** (synced via rsync/cp):
+- `.bash_profile` - Bash config, loads modular dotfiles (`.path`, `.bash_prompt`, `.exports`, `.aliases`, `.functions`, `.extra`)
+- `.bash_prompt` - Git-aware bash prompt with colors (Zsh uses Starship instead)
+- `.aliases` - Shell aliases for navigation, system commands, Python (platform-guarded for macOS/Linux)
+- `.exports` - Environment variables (EDITOR, LANG, HISTSIZE, etc.)
+- `.functions` - Utility shell functions (mkd, targz, fs, server, tre, etc.)
+- `.path` - Custom PATH entries (machine-specific)
+- `.inputrc` - Readline configuration (case-insensitive completion, history search)
+- `.tmux.conf` - tmux configuration (Ctrl+a prefix, vim keys, mouse support)
+- `.gitconfig`, `.gitignore`, `.vimrc`, `.editorconfig`
 
 **Zsh dotfiles** (in `zsh/` directory):
-- `.zshrc` - Main Zsh configuration
-- `.p10k.zsh` - Powerlevel10k theme configuration
-- `.zsh_history` - Command history (not committed by default)
+- `.zshrc` - Main Zsh config (Oh My Zsh, plugins, Starship prompt)
+- `starship.toml` - Starship prompt configuration (deployed to `~/.config/starship.toml`)
 
 ## Essential Commands
 
-### Initial Setup
-
 ```bash
-# Full automated setup (installs everything without prompts)
-./bootstrap.sh --force
+# Full setup
+./bootstrap.sh              # Interactive
+./bootstrap.sh --force      # Unattended
 
-# Interactive setup (prompts for each component)
-./bootstrap.sh
-```
+# CLI tool
+./dotfiles sync             # Sync dotfiles
+./dotfiles install          # Install components
+./dotfiles update           # Update all tools and plugins
+./dotfiles status           # Show status
+./dotfiles health           # Health check
 
-The bootstrap process installs in order:
-1. System dependencies (Homebrew, jq, tree, btop, tmux, neovim, ripgrep, etc.)
-2. Pipx dependencies (black, flake8, poetry)
-3. Dotfiles sync (rsync to home directory)
-4. Zsh setup (Oh My Zsh, Powerlevel10k, plugins)
-5. VS Code installation and configuration
-6. Neovim installation and plugin setup
+# Make targets
+make install                # Interactive install
+make install-force          # Unattended install
+make lint                   # Shellcheck all scripts
+make test                   # Full validation
+make macos                  # Apply macOS preferences
 
-### Syncing Dotfiles
-
-```bash
-# Sync dotfiles between home directory and repository
-./update_dotfiles.sh
-
-# Select sync direction:
-# 1) Home to Repository (after making local changes)
-# 2) Repository to Home (after pulling updates)
-
-# The script will:
-# - Prompt to select specific dotfiles to sync
-# - Show diffs before syncing (optional)
-# - Only copy files that have changed
-```
-
-### Component-Specific Setup
-
-```bash
-# Install/update system dependencies
+# Component-specific
 ./scripts/install_system_dependencies.sh
-
-# Install/update Python tools via pipx
 ./scripts/install_pipx_dependencies.sh
-
-# Zsh configuration management
-./zsh/install.sh         # Install Zsh, Oh My Zsh, Powerlevel10k, plugins
-./zsh/backup_zsh_dotfiles.sh  # Backup Zsh configs
-./zsh/uninstall.sh       # Remove Zsh configurations
-
-# Neovim setup
-./neovim/install.sh      # Install Neovim, Vim-Plug, plugins, set VIMRUNTIME
-
-# VS Code setup
-./vscode/install.sh      # Install VS Code for Apple Silicon, setup PATH
-./vscode/fix_vscode_fonts.sh  # Fix font rendering issues
+./zsh/install.sh
+./neovim/install.sh
+./vscode/install.sh
+./.claude/install.sh
+./scripts/macos.sh
 ```
 
 ## Key Design Patterns
 
-### Idempotent Installation Scripts
+### Idempotent Scripts
+All install scripts check for existing installations before proceeding. Safe to run multiple times.
 
-All installation scripts check for existing installations before proceeding:
-- Use `command_exists()` to verify if tools are already installed
-- Skip installation and update instead when appropriate
-- Safe to run multiple times without side effects
+### Portable Homebrew Detection
+Scripts detect both ARM64 (`/opt/homebrew`) and Intel (`/usr/local`) Homebrew paths. No hardcoded architecture assumptions.
 
-### Platform Detection
-
-Scripts detect the OS and use appropriate package managers:
-- **macOS**: Homebrew (`brew`)
-- **Linux**: APT (`apt-get`)
+### Resilient VIMRUNTIME
+Uses `brew --prefix` for a version-independent path that survives Neovim upgrades, with fallback to version-specific Cellar path.
 
 ### Configuration Layering (.bash_profile)
-
-The `.bash_profile` follows a modular loading pattern:
-
 ```bash
 for file in ~/.{path,bash_prompt,exports,aliases,functions,extra}; do
-    [ -r "$file" ] && [ -f "$file" ] && source "$file";
-done;
+    [ -r "$file" ] && [ -f "$file" ] && source "$file"
+done
 ```
 
-This allows extending configurations via:
-- `~/.extra` - Personal settings not committed to the repository
-- `~/.path` - Custom PATH extensions
-- Other dotfiles as needed
-
-### Environment Variables
-
-Key environment variables set during installation:
-
-- `VIMRUNTIME` - Set dynamically based on Neovim version in `/opt/homebrew/Cellar/neovim/`
-- `PATH` additions:
-  - `$HOME/bin`
-  - Homebrew: `/opt/homebrew/bin`
-  - Pipx: `$HOME/.local/bin`
-  - VS Code: `$VSCODE_APP_PATH/Contents/Resources/app/bin`
-
-## Tool-Specific Details
-
-### Zsh Configuration
-
-The Zsh setup installs:
-- **Oh My Zsh** framework
-- **Powerlevel10k** theme
-- **Plugins**:
-  - `zsh-autosuggestions`
-  - `zsh-completions`
-  - `zsh-syntax-highlighting`
-
-Configuration is automatically set as the default shell and added to `.bashrc` for VS Code compatibility.
-
-### Neovim Setup
-
-Uses **Vim-Plug** as the plugin manager. The installation:
-1. Installs/updates Neovim via Homebrew
-2. Installs Node.js (required for some plugins)
-3. Downloads Vim-Plug to `~/.local/share/nvim/site/autoload/`
-4. Copies `init.vim` to `~/.config/nvim/`
-5. Sets `VIMRUNTIME` environment variable
-6. Runs `nvim +PlugInstall +qall` to install plugins
-7. Installs ripgrep for search functionality
-
-### VS Code Installation
-
-Installs VS Code for **Apple Silicon (ARM64)** specifically:
-- Downloads from `https://update.code.visualstudio.com/latest/darwin-arm64/stable`
-- Installs to `~/Applications/Visual Studio Code.app`
-- Creates symlink `/usr/local/bin/code` for CLI access
-- Adds `code` command to PATH in both `.bash_profile` and `.zshrc`
+`~/.extra` and `~/.path` are for machine-specific settings not committed to the repo.
 
 ## System Dependencies
 
-Installed via Homebrew (macOS) or APT (Linux):
-- `jq` - JSON processor (required for VS Code config)
-- `tree` - Directory visualization
-- `btop` - Resource monitor
-- `tmux` - Terminal multiplexer
-- `stats` - System monitor
-- `pipx` - Python application installer
-- `neovim` - Text editor
-- `ripgrep` - Fast grep alternative
+**Homebrew packages** (declared in `Brewfile`, installed via `brew bundle`): jq, tree, btop, tmux, pipx, neovim, ripgrep, fd, gum, fzf, starship, zoxide, stats (macOS cask)
 
-## Python Development Setup
+**Pipx-managed**: black, flake8, poetry
 
-Pipx-managed tools (isolated Python environments):
-- `black` - Code formatter
-- `flake8` - Linter
-- `poetry` - Dependency management
+**Zsh plugins**: zsh-autosuggestions, zsh-completions, zsh-syntax-highlighting, zsh-history-substring-search
 
-Python aliases configured in `.aliases`:
-```bash
-python → python3
-py → python
-pip → pip3
-```
+## Tool Stack
+
+### Shell: Zsh + Oh My Zsh + Starship
+- **Oh My Zsh** for plugin management and framework
+- **Starship** for prompt (replaces archived Powerlevel10k, Rust-based, cross-shell)
+- **fzf** for fuzzy finding (integrated via `fzf --zsh`)
+- **zoxide** for smarter `cd` navigation
+
+### Editor: Neovim + lazy.nvim + Native LSP
+- **lazy.nvim** for plugin management (replaces Vim-Plug, self-bootstrapping, lazy-loading)
+- **init.lua** configuration (replaces legacy init.vim Vimscript)
+- **nvim-lspconfig** + **mason.nvim** for language server management (replaces Node-dependent CoC)
+- **nvim-cmp** for autocompletion with LSP integration
+- **nvim-treesitter** for syntax highlighting and indentation
+- **telescope.nvim** for fuzzy finding (replaces fzf.vim)
+- **nvim-tree.lua** for file explorer (replaces NERDTree)
+- **lualine.nvim** for statusline (replaces lightline.vim)
+- **gitsigns.nvim** for git integration (replaces vim-gitgutter)
+
+## CI/CD
+
+GitHub Actions workflow (`.github/workflows/lint.yml`) runs shellcheck and syntax validation on all scripts.
 
 ## Modifying Configurations
 
-When updating dotfiles:
-
-1. **Modify files in home directory** (`~/.zshrc`, `~/.bash_profile`, etc.)
-2. **Test changes** to ensure they work
-3. **Run sync script**: `./update_dotfiles.sh`
-4. **Select "Home to Repository"** direction
-5. **Review diffs** before confirming sync
-6. **Commit and push** changes to repository
-
-When pulling updates from repository:
-
-1. **Pull latest changes**: `git pull origin main`
-2. **Run sync script**: `./update_dotfiles.sh`
-3. **Select "Repository to Home"** direction
-4. **Review diffs** before confirming sync
-5. **Reload shell**: `source ~/.zshrc` or `source ~/.bash_profile`
+1. Edit files in home directory (`~/.zshrc`, `~/.aliases`, etc.)
+2. Test changes
+3. Run `./update_dotfiles.sh` and select "Home to Repository"
+4. Review diffs before confirming
+5. Commit and push
 
 ## Claude Code Configuration
 
-The repository includes global Claude Code configurations for consistency across projects.
-
-### Directory Structure
-
-```
-.claude/
-├── settings.json                          # Global Claude Code settings
-└── skills/
-    └── natural-text-corrector/
-        └── SKILL.md                       # Text correction skill
-```
-
-### Settings (`settings.json`)
-
-**Custom Status Line**: Shows user, hostname, working directory, and model in the CLI
-```bash
-user@hostname:directory [model-name]
-```
-
-**Enabled Plugins**:
-- `document-skills@anthropic-agent-skills` - Excel, Word, PowerPoint, PDF manipulation
-
-**Features**:
-- `alwaysThinkingEnabled: false` - Disables always-on thinking mode
-
-### Skills
-
-**natural-text-corrector**: Corrects English text by:
-- Removing AI-generated patterns (excessive em dashes, formal phrases)
-- Fixing speech-to-text errors (homophones, punctuation, capitalization)
-- Improving natural flow while preserving author's voice
-
-Invoke with: `Skill("natural-text-corrector")` or the skill will be auto-suggested when relevant.
-
-### Installation
-
-Claude Code configurations are stored globally in `~/.claude/`. To sync:
-
-```bash
-# Deploy configurations from repo to global location
-cp -r .claude/* ~/.claude/
-
-# OR sync from global location back to repo (after making changes)
-cp ~/.claude/settings.json .claude/settings.json
-cp -r ~/.claude/skills/* .claude/skills/
-```
-
-**Note**: Only skills and settings.json are version-controlled. Runtime data (history, todos, debug logs) are excluded.
-
-## Notes
-
-- The repository uses rsync with exclusions (`.git/`, `.DS_Store`, `bootstrap.sh`, etc.) when syncing
-- Zsh is set as the default shell in `.bashrc` via `exec zsh` for VS Code terminal compatibility
-- All installation scripts include health checks to verify successful installation
-- Environment variables are added to both `.bash_profile` and `.zshrc` for cross-shell compatibility
+Stored in `.claude/` directory. Synced bidirectionally between repo and `~/.claude/`.
+- `settings.json` - Global Claude Code settings
+- `skills/` - Custom skill definitions
