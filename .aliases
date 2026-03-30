@@ -154,3 +154,8 @@ if [[ "$(uname -s)" == "Linux" ]]; then
   fi
 
 fi
+
+# Obsidian CLI (obsidian-cli is the CLI binary; 'obsidian' would launch the GUI)
+if [ -f "/Applications/Obsidian.app/Contents/MacOS/obsidian-cli" ]; then
+  alias obsidian="obsidian-cli"
+fi
