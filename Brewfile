@@ -22,6 +22,8 @@ brew "uv"
 brew "ruff"
 
 # Hermes Agent dependencies
+brew "defuddle-cli"
+
 brew "espeak-ng"
 brew "ffmpeg"
 
