@@ -77,9 +77,20 @@ sync_repo_to_global() {
     echo "⚠️  settings.json not found in repository"
   fi
 
-  # Skills are managed by agent-skills repo (see ~/Developer/agent-skills).
-  # Run `bash ~/Developer/agent-skills/setup/bootstrap.sh` separately to wire skills.
-  echo "ℹ️  Skills managed separately by agent-skills (run its bootstrap.sh)"
+  # Skills are managed by the agent-skills repo, not synced from here.
+  # Probe the conventional location and surface the next step explicitly so a
+  # fresh checkout doesn't silently end up with no skills wired.
+  AGENT_SKILLS_DIR="$HOME/Developer/agent-skills"
+  AGENT_SKILLS_REPO="https://github.com/connectwithprakash/agent-skills"
+  if [ -d "$AGENT_SKILLS_DIR" ]; then
+    echo "💡 Skills repo detected at $AGENT_SKILLS_DIR"
+    echo "    Wire skills with: bash $AGENT_SKILLS_DIR/setup/bootstrap.sh"
+  else
+    echo "⚠️  agent-skills not found at $AGENT_SKILLS_DIR -- skills will not be wired."
+    echo "    To install:"
+    echo "      git clone $AGENT_SKILLS_REPO $AGENT_SKILLS_DIR"
+    echo "      bash $AGENT_SKILLS_DIR/setup/bootstrap.sh"
+  fi
 
   echo "🎉 Claude Code configurations synced successfully to ~/.claude/!"
 }
@@ -115,9 +126,11 @@ sync_global_to_repo() {
     echo "⚠️  settings.json not found in global ~/.claude/"
   fi
 
-  # Skills are managed by agent-skills repo (see ~/Developer/agent-skills).
-  # Edits to skills should land in agent-skills directly, not here.
-  echo "ℹ️  Skills managed separately by agent-skills"
+  # Skills are managed by the agent-skills repo, not this dotfiles repo.
+  # Edits to skills should land in agent-skills directly so all wired tools
+  # (Claude Code, Codex, Hermes) pick them up via the symlink/external_dirs setup.
+  echo "ℹ️  Skills are managed separately. Edit them in:"
+  echo "    \$HOME/Developer/agent-skills (https://github.com/connectwithprakash/agent-skills)"
 
   echo "🎉 Claude Code configurations synced successfully to repository!"
 }
