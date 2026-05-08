@@ -77,22 +77,32 @@ sync_repo_to_global() {
     echo "⚠️  settings.json not found in repository"
   fi
 
-  # Skills are managed by the agent-skills repo, not synced from here.
-  # Probe the conventional location and surface the next step explicitly so a
-  # fresh checkout doesn't silently end up with no skills wired.
-  AGENT_SKILLS_DIR="$HOME/Developer/agent-skills"
-  AGENT_SKILLS_REPO="https://github.com/connectwithprakash/agent-skills"
-  if [ -d "$AGENT_SKILLS_DIR" ]; then
-    echo "💡 Skills repo detected at $AGENT_SKILLS_DIR"
-    echo "    Wire skills with: bash $AGENT_SKILLS_DIR/setup/bootstrap.sh"
+  # Skills are managed by the agent-skills repo, not synced from here. Probe
+  # for it (overridable via $AGENT_SKILLS_DIR) and check that bootstrap.sh
+  # actually exists -- a present-but-incomplete checkout is a real failure
+  # mode we want to call out distinctly. The headline message at the bottom
+  # of this function reflects whether skills are wirable, not just whether
+  # settings.json copied.
+  local AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/Developer/agent-skills}"
+  local AGENT_SKILLS_BOOTSTRAP="$AGENT_SKILLS_DIR/setup/bootstrap.sh"
+  local AGENT_SKILLS_REPO="https://github.com/connectwithprakash/agent-skills"
+  if [ -f "$AGENT_SKILLS_BOOTSTRAP" ]; then
+    echo "💡 agent-skills detected at $AGENT_SKILLS_DIR"
+    echo "    Wire skills with: bash $AGENT_SKILLS_BOOTSTRAP"
+    echo "🎉 Claude Code configurations synced to ~/.claude/!"
   else
-    echo "⚠️  agent-skills not found at $AGENT_SKILLS_DIR -- skills will not be wired."
-    echo "    To install:"
-    echo "      git clone $AGENT_SKILLS_REPO $AGENT_SKILLS_DIR"
-    echo "      bash $AGENT_SKILLS_DIR/setup/bootstrap.sh"
+    if [ -d "$AGENT_SKILLS_DIR" ]; then
+      echo "⚠️  agent-skills directory exists at $AGENT_SKILLS_DIR but $AGENT_SKILLS_BOOTSTRAP is missing."
+      echo "    Repo may be a partial checkout. Update with:"
+      echo "      cd $AGENT_SKILLS_DIR && git pull"
+    else
+      echo "⚠️  agent-skills not found at $AGENT_SKILLS_DIR -- skills will not be wired."
+      echo "    To install:"
+      echo "      git clone $AGENT_SKILLS_REPO $AGENT_SKILLS_DIR"
+      echo "      bash $AGENT_SKILLS_BOOTSTRAP"
+    fi
+    echo "✓ settings.json synced to ~/.claude/. Skills NOT wired -- see warning above."
   fi
-
-  echo "🎉 Claude Code configurations synced successfully to ~/.claude/!"
 }
 
 # Function to sync from global to repository
@@ -127,8 +137,9 @@ sync_global_to_repo() {
   fi
 
   # Skills are managed by the agent-skills repo, not this dotfiles repo.
-  # Edits to skills should land in agent-skills directly so all wired tools
-  # (Claude Code, Codex, Hermes) pick them up via the symlink/external_dirs setup.
+  # Edits should land in agent-skills directly; the wired tools (Claude Code
+  # symlinks, Codex symlinks, Hermes' skills.external_dirs config) point at
+  # those files automatically.
   echo "ℹ️  Skills are managed separately. Edit them in:"
   echo "    \$HOME/Developer/agent-skills (https://github.com/connectwithprakash/agent-skills)"
 
