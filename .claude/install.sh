@@ -102,7 +102,6 @@ sync_repo_to_global() {
     echo "      bash $AGENT_SKILLS_BOOTSTRAP"
   fi
 
-  # Headline reflects what actually happened across both concerns.
   if [ "$SETTINGS_SYNCED" = true ] && [ "$SKILLS_WIRABLE" = true ]; then
     echo "🎉 Claude Code configurations synced to ~/.claude/!"
   elif [ "$SETTINGS_SYNCED" = true ]; then
@@ -137,10 +136,12 @@ sync_global_to_repo() {
   fi
 
   # Sync settings.json
+  local SETTINGS_SYNCED=false
   if file_exists "$GLOBAL_CLAUDE_DIR/settings.json"; then
     echo "⚙️  Syncing settings.json..."
     cp "$GLOBAL_CLAUDE_DIR/settings.json" "$DOTFILES_CLAUDE_DIR/settings.json"
     echo "✅ settings.json synced to repository"
+    SETTINGS_SYNCED=true
   else
     echo "⚠️  settings.json not found in global ~/.claude/"
   fi
@@ -152,7 +153,11 @@ sync_global_to_repo() {
   echo "ℹ️  Skills are managed separately -- edit them in your local agent-skills checkout."
   echo "    Repo: https://github.com/connectwithprakash/agent-skills"
 
-  echo "🎉 Claude Code configurations synced successfully to repository!"
+  if [ "$SETTINGS_SYNCED" = true ]; then
+    echo "🎉 Claude Code configurations synced successfully to repository!"
+  else
+    echo "⚠️  Nothing synced to repository -- see warning above."
+  fi
 }
 
 # Function to prompt for sync direction
