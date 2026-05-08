@@ -69,39 +69,48 @@ sync_repo_to_global() {
   fi
 
   # Sync settings.json
+  local SETTINGS_SYNCED=false
   if file_exists "$DOTFILES_CLAUDE_DIR/settings.json"; then
     echo "⚙️  Syncing settings.json..."
     cp "$DOTFILES_CLAUDE_DIR/settings.json" "$GLOBAL_CLAUDE_DIR/settings.json"
     echo "✅ settings.json synced to global"
+    SETTINGS_SYNCED=true
   else
     echo "⚠️  settings.json not found in repository"
   fi
 
-  # Skills are managed by the agent-skills repo, not synced from here. Probe
-  # for it (overridable via $AGENT_SKILLS_DIR) and check that bootstrap.sh
-  # actually exists -- a present-but-incomplete checkout is a real failure
-  # mode we want to call out distinctly. The headline message at the bottom
-  # of this function reflects whether skills are wirable, not just whether
-  # settings.json copied.
+  # Skills are managed by the agent-skills repo, not synced from here.
+  # Probe path is overridable via $AGENT_SKILLS_DIR. We key on the
+  # bootstrap.sh file (not just the directory) so a partial checkout is
+  # reported distinctly from a missing one.
   local AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/Developer/agent-skills}"
   local AGENT_SKILLS_BOOTSTRAP="$AGENT_SKILLS_DIR/setup/bootstrap.sh"
   local AGENT_SKILLS_REPO="https://github.com/connectwithprakash/agent-skills"
+  local SKILLS_WIRABLE=false
   if [ -f "$AGENT_SKILLS_BOOTSTRAP" ]; then
     echo "💡 agent-skills detected at $AGENT_SKILLS_DIR"
     echo "    Wire skills with: bash $AGENT_SKILLS_BOOTSTRAP"
-    echo "🎉 Claude Code configurations synced to ~/.claude/!"
+    SKILLS_WIRABLE=true
+  elif [ -d "$AGENT_SKILLS_DIR" ]; then
+    echo "⚠️  agent-skills directory exists at $AGENT_SKILLS_DIR but $AGENT_SKILLS_BOOTSTRAP is missing."
+    echo "    Repo may be a partial checkout. Update with:"
+    echo "      cd $AGENT_SKILLS_DIR && git pull"
   else
-    if [ -d "$AGENT_SKILLS_DIR" ]; then
-      echo "⚠️  agent-skills directory exists at $AGENT_SKILLS_DIR but $AGENT_SKILLS_BOOTSTRAP is missing."
-      echo "    Repo may be a partial checkout. Update with:"
-      echo "      cd $AGENT_SKILLS_DIR && git pull"
-    else
-      echo "⚠️  agent-skills not found at $AGENT_SKILLS_DIR -- skills will not be wired."
-      echo "    To install:"
-      echo "      git clone $AGENT_SKILLS_REPO $AGENT_SKILLS_DIR"
-      echo "      bash $AGENT_SKILLS_BOOTSTRAP"
-    fi
-    echo "✓ settings.json synced to ~/.claude/. Skills NOT wired -- see warning above."
+    echo "⚠️  agent-skills not found at $AGENT_SKILLS_DIR -- skills will not be wired."
+    echo "    To install:"
+    echo "      git clone $AGENT_SKILLS_REPO $AGENT_SKILLS_DIR"
+    echo "      bash $AGENT_SKILLS_BOOTSTRAP"
+  fi
+
+  # Headline reflects what actually happened across both concerns.
+  if [ "$SETTINGS_SYNCED" = true ] && [ "$SKILLS_WIRABLE" = true ]; then
+    echo "🎉 Claude Code configurations synced to ~/.claude/!"
+  elif [ "$SETTINGS_SYNCED" = true ]; then
+    echo "✓ settings.json synced. Skills NOT wired -- see warning above."
+  elif [ "$SKILLS_WIRABLE" = true ]; then
+    echo "⚠️  Skills wirable, but settings.json was missing -- see warning above."
+  else
+    echo "⚠️  Neither settings.json nor skills wired -- see warnings above."
   fi
 }
 
@@ -140,8 +149,8 @@ sync_global_to_repo() {
   # Edits should land in agent-skills directly; the wired tools (Claude Code
   # symlinks, Codex symlinks, Hermes' skills.external_dirs config) point at
   # those files automatically.
-  echo "ℹ️  Skills are managed separately. Edit them in:"
-  echo "    \$HOME/Developer/agent-skills (https://github.com/connectwithprakash/agent-skills)"
+  echo "ℹ️  Skills are managed separately -- edit them in your local agent-skills checkout."
+  echo "    Repo: https://github.com/connectwithprakash/agent-skills"
 
   echo "🎉 Claude Code configurations synced successfully to repository!"
 }
