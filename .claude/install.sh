@@ -69,25 +69,48 @@ sync_repo_to_global() {
   fi
 
   # Sync settings.json
+  local SETTINGS_SYNCED=false
   if file_exists "$DOTFILES_CLAUDE_DIR/settings.json"; then
     echo "⚙️  Syncing settings.json..."
     cp "$DOTFILES_CLAUDE_DIR/settings.json" "$GLOBAL_CLAUDE_DIR/settings.json"
     echo "✅ settings.json synced to global"
+    SETTINGS_SYNCED=true
   else
     echo "⚠️  settings.json not found in repository"
   fi
 
-  # Sync skills directory
-  if dir_exists "$DOTFILES_CLAUDE_DIR/skills"; then
-    echo "🎯 Syncing skills..."
-    mkdir -p "$GLOBAL_CLAUDE_DIR/skills"
-    cp -r "$DOTFILES_CLAUDE_DIR/skills/"* "$GLOBAL_CLAUDE_DIR/skills/" 2>/dev/null || true
-    echo "✅ Skills synced to global"
+  # Skills are managed by the agent-skills repo, not synced from here.
+  # Probe path is overridable via $AGENT_SKILLS_DIR. We key on the
+  # bootstrap.sh file (not just the directory) so a partial checkout is
+  # reported distinctly from a missing one.
+  local AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/Developer/agent-skills}"
+  local AGENT_SKILLS_BOOTSTRAP="$AGENT_SKILLS_DIR/setup/bootstrap.sh"
+  local AGENT_SKILLS_REPO="https://github.com/connectwithprakash/agent-skills"
+  local SKILLS_WIRABLE=false
+  if [ -f "$AGENT_SKILLS_BOOTSTRAP" ]; then
+    echo "💡 agent-skills detected at $AGENT_SKILLS_DIR"
+    echo "    Wire skills with: bash $AGENT_SKILLS_BOOTSTRAP"
+    SKILLS_WIRABLE=true
+  elif [ -d "$AGENT_SKILLS_DIR" ]; then
+    echo "⚠️  agent-skills directory exists at $AGENT_SKILLS_DIR but $AGENT_SKILLS_BOOTSTRAP is missing."
+    echo "    Repo may be a partial checkout. Update with:"
+    echo "      cd $AGENT_SKILLS_DIR && git pull"
   else
-    echo "⚠️  skills directory not found in repository"
+    echo "⚠️  agent-skills not found at $AGENT_SKILLS_DIR -- skills will not be wired."
+    echo "    To install:"
+    echo "      git clone $AGENT_SKILLS_REPO $AGENT_SKILLS_DIR"
+    echo "      bash $AGENT_SKILLS_BOOTSTRAP"
   fi
 
-  echo "🎉 Claude Code configurations synced successfully to ~/.claude/!"
+  if [ "$SETTINGS_SYNCED" = true ] && [ "$SKILLS_WIRABLE" = true ]; then
+    echo "🎉 Claude Code configurations synced to ~/.claude/!"
+  elif [ "$SETTINGS_SYNCED" = true ]; then
+    echo "✓ settings.json synced. Skills NOT wired -- see warning above."
+  elif [ "$SKILLS_WIRABLE" = true ]; then
+    echo "⚠️  Skills wirable, but settings.json was missing -- see warning above."
+  else
+    echo "⚠️  Neither settings.json nor skills wired -- see warnings above."
+  fi
 }
 
 # Function to sync from global to repository
@@ -113,25 +136,28 @@ sync_global_to_repo() {
   fi
 
   # Sync settings.json
+  local SETTINGS_SYNCED=false
   if file_exists "$GLOBAL_CLAUDE_DIR/settings.json"; then
     echo "⚙️  Syncing settings.json..."
     cp "$GLOBAL_CLAUDE_DIR/settings.json" "$DOTFILES_CLAUDE_DIR/settings.json"
     echo "✅ settings.json synced to repository"
+    SETTINGS_SYNCED=true
   else
     echo "⚠️  settings.json not found in global ~/.claude/"
   fi
 
-  # Sync skills directory
-  if dir_exists "$GLOBAL_CLAUDE_DIR/skills"; then
-    echo "🎯 Syncing skills..."
-    mkdir -p "$DOTFILES_CLAUDE_DIR/skills"
-    cp -r "$GLOBAL_CLAUDE_DIR/skills/"* "$DOTFILES_CLAUDE_DIR/skills/" 2>/dev/null || true
-    echo "✅ Skills synced to repository"
-  else
-    echo "⚠️  skills directory not found in global ~/.claude/"
-  fi
+  # Skills are managed by the agent-skills repo, not this dotfiles repo.
+  # Edits should land in agent-skills directly; the wired tools (Claude Code
+  # symlinks, Codex symlinks, Hermes' skills.external_dirs config) point at
+  # those files automatically.
+  echo "ℹ️  Skills are managed separately -- edit them in your local agent-skills checkout."
+  echo "    Repo: https://github.com/connectwithprakash/agent-skills"
 
-  echo "🎉 Claude Code configurations synced successfully to repository!"
+  if [ "$SETTINGS_SYNCED" = true ]; then
+    echo "🎉 Claude Code configurations synced successfully to repository!"
+  else
+    echo "⚠️  Nothing synced to repository -- see warning above."
+  fi
 }
 
 # Function to prompt for sync direction
