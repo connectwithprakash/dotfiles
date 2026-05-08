@@ -77,15 +77,9 @@ sync_repo_to_global() {
     echo "⚠️  settings.json not found in repository"
   fi
 
-  # Sync skills directory
-  if dir_exists "$DOTFILES_CLAUDE_DIR/skills"; then
-    echo "🎯 Syncing skills..."
-    mkdir -p "$GLOBAL_CLAUDE_DIR/skills"
-    cp -r "$DOTFILES_CLAUDE_DIR/skills/"* "$GLOBAL_CLAUDE_DIR/skills/" 2>/dev/null || true
-    echo "✅ Skills synced to global"
-  else
-    echo "⚠️  skills directory not found in repository"
-  fi
+  # Skills are managed by agent-skills repo (see ~/Developer/agent-skills).
+  # Run `bash ~/Developer/agent-skills/setup/bootstrap.sh` separately to wire skills.
+  echo "ℹ️  Skills managed separately by agent-skills (run its bootstrap.sh)"
 
   echo "🎉 Claude Code configurations synced successfully to ~/.claude/!"
 }
@@ -121,15 +115,9 @@ sync_global_to_repo() {
     echo "⚠️  settings.json not found in global ~/.claude/"
   fi
 
-  # Sync skills directory
-  if dir_exists "$GLOBAL_CLAUDE_DIR/skills"; then
-    echo "🎯 Syncing skills..."
-    mkdir -p "$DOTFILES_CLAUDE_DIR/skills"
-    cp -r "$GLOBAL_CLAUDE_DIR/skills/"* "$DOTFILES_CLAUDE_DIR/skills/" 2>/dev/null || true
-    echo "✅ Skills synced to repository"
-  else
-    echo "⚠️  skills directory not found in global ~/.claude/"
-  fi
+  # Skills are managed by agent-skills repo (see ~/Developer/agent-skills).
+  # Edits to skills should land in agent-skills directly, not here.
+  echo "ℹ️  Skills managed separately by agent-skills"
 
   echo "🎉 Claude Code configurations synced successfully to repository!"
 }
