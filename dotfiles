@@ -72,6 +72,8 @@ show_help() {
   echo "  dotfiles apply zsh/starship.toml"
   echo "  dotfiles capture .aliases"
   echo "  dotfiles install      # Install components interactively"
+  echo "  dotfiles install zsh  # Install/apply only Zsh + Starship"
+  echo "  dotfiles install --dry-run zsh iterm2"
   echo "  dotfiles status       # Show current status"
   echo "  dotfiles health       # Run health check"
 }

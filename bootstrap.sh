@@ -102,6 +102,74 @@ _run_macos_prefs() {
   print_success "Reminder noted"
 }
 
+# Component aliases for non-interactive installs.
+component_from_arg() {
+  local key
+  key="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]')"
+
+  case "$key" in
+    system|systems|deps|dependencies|brew|homebrew) echo "System Dependencies" ;;
+    python|pyenv|uv|pythonuv|pyenvuv) echo "Python (pyenv + uv)" ;;
+    dotfiles|sync|dotfilessync) echo "Dotfiles Sync" ;;
+    zsh|shell|starship|zshstarship|ohmyzsh|omz) echo "Zsh + Starship" ;;
+    neovim|nvim|vim) echo "Neovim" ;;
+    iterm|iterm2|terminal) echo "iTerm2" ;;
+    vscode|code|visualstudiocode) echo "VS Code" ;;
+    claude|claudecode) echo "Claude Code" ;;
+    macos|osx|preferences|macospreferences) echo "macOS Preferences" ;;
+    *) return 1 ;;
+  esac
+}
+
+show_usage() {
+  print_banner "Dotfiles" "Development environment setup"
+  echo "Usage: ./bootstrap.sh [--force|-f] [--list] [--dry-run] [component ...]"
+  echo ""
+  echo "Components and aliases:"
+  echo "  system | deps | brew       -> System Dependencies"
+  echo "  python | pyenv | uv        -> Python (pyenv + uv)"
+  echo "  sync | dotfiles            -> Dotfiles Sync"
+  echo "  zsh | starship | shell     -> Zsh + Starship"
+  echo "  neovim | nvim              -> Neovim"
+  echo "  iterm2 | iterm | terminal  -> iTerm2"
+  echo "  vscode | code              -> VS Code"
+  echo "  claude | claude-code       -> Claude Code"
+  echo "  macos | preferences        -> macOS Preferences"
+  echo ""
+  echo "Examples:"
+  echo "  ./bootstrap.sh zsh"
+  echo "  ./bootstrap.sh starship"
+  echo "  ./bootstrap.sh sync zsh iterm2"
+  echo "  ./bootstrap.sh --dry-run zsh"
+}
+
+list_components() {
+  local comp
+  for comp in "${COMPONENTS[@]}"; do
+    echo "$comp"
+  done
+}
+
+select_components_from_args() {
+  SELECTED_COMPONENTS=()
+  local arg comp existing duplicate
+
+  for arg in "$@"; do
+    comp="$(component_from_arg "$arg")" || {
+      print_error "Unknown component: $arg"
+      echo ""
+      show_usage
+      return 1
+    }
+
+    duplicate=false
+    for existing in "${SELECTED_COMPONENTS[@]}"; do
+      [ "$existing" = "$comp" ] && duplicate=true && break
+    done
+    [ "$duplicate" = false ] && SELECTED_COMPONENTS+=("$comp")
+  done
+}
+
 # Map component name to function
 run_component_by_name() {
   local name="$1"
@@ -120,6 +188,47 @@ run_component_by_name() {
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
+DRY_RUN=false
+FORCE=false
+component_args=()
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --force|-f)
+      FORCE=true
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      ;;
+    --list)
+      list_components
+      exit 0
+      ;;
+    --help|-h)
+      show_usage
+      exit 0
+      ;;
+    --)
+      shift
+      while [ "$#" -gt 0 ]; do
+        component_args+=("$1")
+        shift
+      done
+      break
+      ;;
+    --*)
+      print_error "Unknown option: $1"
+      echo ""
+      show_usage
+      exit 1
+      ;;
+    *)
+      component_args+=("$1")
+      ;;
+  esac
+  shift
+done
+
 print_banner "Dotfiles" "Development environment setup"
 
 # Update from remote
@@ -130,11 +239,14 @@ configure_git_identity
 
 TOTAL_START=$(date +%s)
 
-if [[ "$1" == "--force" || "$1" == "-f" ]]; then
+if [ "$FORCE" = true ]; then
   # Force mode: install everything
   selected=("${COMPONENTS[@]}")
   echo ""
   print_info "Force mode: installing all components"
+elif [ ${#component_args[@]} -gt 0 ]; then
+  select_components_from_args "${component_args[@]}" || exit 1
+  selected=("${SELECTED_COMPONENTS[@]}")
 else
   # Interactive mode: let user pick
   select_components "Select components to install:" "${COMPONENTS[@]}"
@@ -145,6 +257,15 @@ else
     print_warning "No components selected. Nothing to do."
     exit 0
   fi
+fi
+
+if [ "$DRY_RUN" = true ]; then
+  echo ""
+  print_info "Dry run: selected component(s):"
+  for comp in "${selected[@]}"; do
+    echo "  - $comp"
+  done
+  exit 0
 fi
 
 # Run selected components
