@@ -194,7 +194,10 @@ require("lazy").setup({
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
       require("lualine").setup({
-        options = { theme = require("catppuccin.utils.lualine")("mocha") },
+        options = {
+          theme = require("catppuccin.utils.lualine")("mocha"),
+          icons_enabled = false,
+        },
       })
     end,
   },
@@ -239,7 +242,13 @@ require("lazy").setup({
     event = "VeryLazy",
     config = function()
       local wk = require("which-key")
-      wk.setup()
+      wk.setup({
+        icons = {
+          mappings = false,
+          rules = false,
+          colors = false,
+        },
+      })
       wk.add({
         { "<leader>c", group = "code" },
         { "<leader>e", desc = "Show diagnostic" },
