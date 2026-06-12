@@ -1,8 +1,9 @@
 # Starship prompt configuration
 # Docs: https://starship.rs/config/
 
-# Timeout for commands (ms)
-command_timeout = 500
+# Timeout for commands (ms). pyenv shims can exceed Starship's 500ms default
+# briefly on fresh shells/machines, causing noisy prompt warnings.
+command_timeout = 2000
 
 # Insert a blank line between prompts
 add_newline = true
