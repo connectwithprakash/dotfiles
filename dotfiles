@@ -134,16 +134,42 @@ show_status() {
   fi
 
   local changed=0
-  if [ -f "$HOME/.zshrc" ] && [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
-    if ! diff -q "$HOME/.zshrc" "$DOTFILES_DIR/zsh/.zshrc" &>/dev/null; then
-      ((changed++))
-    fi
-  fi
+  local missing=0
+  local total=0
 
-  if [ "$changed" -gt 0 ]; then
-    print_info "$changed dotfile(s) have unsync'd changes"
+  while IFS='|' read -r home_path repo_path label; do
+    [ -n "$home_path" ] || continue
+    total=$((total + 1))
+
+    if [ ! -e "$home_path" ] || [ ! -e "$repo_path" ]; then
+      missing=$((missing + 1))
+      print_info "$label missing on one side"
+    elif ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
+      changed=$((changed + 1))
+      print_info "$label differs"
+    fi
+  done <<EOF
+$HOME/.bash_profile|$DOTFILES_DIR/.bash_profile|.bash_profile
+$HOME/.bash_prompt|$DOTFILES_DIR/.bash_prompt|.bash_prompt
+$HOME/.aliases|$DOTFILES_DIR/.aliases|.aliases
+$HOME/.exports|$DOTFILES_DIR/.exports|.exports
+$HOME/.functions|$DOTFILES_DIR/.functions|.functions
+$HOME/.path|$DOTFILES_DIR/.path|.path
+$HOME/.inputrc|$DOTFILES_DIR/.inputrc|.inputrc
+$HOME/.tmux.conf|$DOTFILES_DIR/.tmux.conf|.tmux.conf
+$HOME/.gitconfig|$DOTFILES_DIR/.gitconfig|.gitconfig
+$HOME/.gitignore|$DOTFILES_DIR/.gitignore|.gitignore
+$HOME/.vimrc|$DOTFILES_DIR/.vimrc|.vimrc
+$HOME/.editorconfig|$DOTFILES_DIR/.editorconfig|.editorconfig
+$HOME/.zshrc|$DOTFILES_DIR/zsh/.zshrc|zsh/.zshrc
+$HOME/.config/starship.toml|$DOTFILES_DIR/zsh/starship.toml|zsh/starship.toml
+$HOME/.hermes/config.yaml|$DOTFILES_DIR/hermes/config.yaml|hermes/config.yaml
+EOF
+
+  if [ "$changed" -gt 0 ] || [ "$missing" -gt 0 ]; then
+    print_info "$changed changed and $missing missing of $total managed dotfile(s)"
   else
-    print_success "All dotfiles are synced"
+    print_success "All $total managed dotfile(s) are synced"
   fi
 }
 
