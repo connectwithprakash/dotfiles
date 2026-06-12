@@ -1,0 +1,15 @@
+{
+  "Profiles": [
+    {
+      "Name": "Hermes Nerd Font",
+      "Guid": "7D5C40F6-8B4E-4E8F-9C61-1E4B4A6B1D3F",
+      "Dynamic Profile Parent Name": "Default",
+      "Normal Font": "MesloLGSNFM-Regular 13",
+      "Non Ascii Font": "MesloLGSNFM-Regular 13",
+      "Use Non-ASCII Font": true,
+      "Use Bold Font": true,
+      "Use Built-In Powerline Glyphs": true,
+      "ASCII Ligatures": false
+    }
+  ]
+}

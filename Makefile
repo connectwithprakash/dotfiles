@@ -30,6 +30,9 @@ install-neovim: ## Install Neovim + plugins
 install-vscode: ## Install VS Code
 	@./vscode/install.sh
 
+install-iterm2: ## Install iTerm2 dynamic profiles
+	@./iterm2/install.sh
+
 install-claude: ## Install Claude Code configurations
 	@./.claude/install.sh
 
@@ -54,7 +57,7 @@ lint: ## Run shellcheck on all scripts
 	@shellcheck -x bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
-		.claude/install.sh hermes/install.sh
+		iterm2/install.sh .claude/install.sh hermes/install.sh
 	@echo "Done."
 
 test: lint ## Run all tests (currently lint + shell syntax checks)
@@ -63,7 +66,7 @@ test: lint ## Run all tests (currently lint + shell syntax checks)
 	for f in bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
-		.claude/install.sh hermes/install.sh; do \
+		iterm2/install.sh .claude/install.sh hermes/install.sh; do \
 		if bash -n "$$f"; then echo "  [ok] $$f"; else echo "  [FAIL] $$f"; failed=1; fi; \
 	done; \
 	if [ "$$failed" -ne 0 ]; then exit "$$failed"; fi
