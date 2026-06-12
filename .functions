@@ -89,3 +89,72 @@ digga() {
 tre() {
   tree -aC -I '.git|node_modules|.venv|__pycache__' --dirsfirst "$@" | less -FRNX
 }
+
+# Enter the local Tinker cookbook environment
+tinkerenv() {
+  cd "$HOME/Developer/tinker-cookbook" || return
+  source "$HOME/venvs/tinker311/.venv/bin/activate"
+  set -a
+  source "$HOME/.hermes/.env"
+  set +a
+}
+
+# Launch the Hello Tinker tutorial
+tinkerhello() {
+  tinkerenv || return
+  ./run_hello_tinker.sh
+}
+
+# Launch the first SFT tutorial
+tinkersft() {
+  tinkerenv || return
+  ./run_first_sft_tutorial.sh
+}
+
+# Show quick status for the local Tinker setup
+tinkerstatus() {
+  tinkerenv || return
+  python - <<'PY'
+import os
+import tinker, marimo, tinker_cookbook
+print(f"cwd: {os.getcwd()}")
+print(f"python: {os.sys.version.split()[0]}")
+print(f"tinker: {getattr(tinker, '__version__', 'unknown')}")
+print(f"marimo: {getattr(marimo, '__version__', 'unknown')}")
+print(f"TINKER_API_KEY present: {bool(os.environ.get('TINKER_API_KEY'))}")
+PY
+}
+
+# List Tinker training runs
+tinkerruns() {
+  tinkerenv || return
+  tinker run list
+}
+
+# Launch the first RL tutorial
+tinkerrl() {
+  tinkerenv || return
+  ./run_first_rl_tutorial.sh
+}
+
+# End-to-end health check for the local Tinker setup
+tinkerdoctor() {
+  tinkerenv || return
+  python - <<'PY'
+import os
+from pathlib import Path
+import tinker, marimo, tinker_cookbook
+root = Path.home() / 'Developer' / 'tinker-cookbook'
+print(f"cwd: {os.getcwd()}")
+print(f"python: {os.sys.version.split()[0]}")
+print(f"tinker: {getattr(tinker, '__version__', 'unknown')}")
+print(f"marimo: {getattr(marimo, '__version__', 'unknown')}")
+print(f"repo exists: {root.exists()}")
+print(f"hello notebook: {(root / 'tutorials/101_hello_tinker.py').exists()}")
+print(f"sft notebook: {(root / 'tutorials/102_first_sft.py').exists()}")
+print(f"rl notebook: {(root / 'tutorials/104_first_rl.py').exists()}")
+print(f"TINKER_API_KEY present: {bool(os.environ.get('TINKER_API_KEY'))}")
+PY
+  printf '\n--- tinker run list ---\n'
+  tinker run list
+}

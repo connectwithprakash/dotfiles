@@ -78,7 +78,7 @@ fi
 
 # Make scripts executable
 chmod +x bootstrap.sh update_dotfiles.sh dotfiles .claude/install.sh \
-  scripts/*.sh zsh/*.sh neovim/*.sh vscode/*.sh 2>/dev/null || true
+  scripts/*.sh zsh/*.sh neovim/*.sh vscode/*.sh hermes/*.sh 2>/dev/null || true
 print_success "Scripts ready"
 
 # Run bootstrap
@@ -94,6 +94,7 @@ elif [ -n "$COMPONENTS" ]; then
       zsh)        ./zsh/install.sh ;;
       neovim|nvim) ./neovim/install.sh ;;
       vscode|code) ./vscode/install.sh ;;
+      hermes)     ./hermes/install.sh ;;
       claude)     ./.claude/install.sh --force ;;
       system|deps) ./scripts/install_system_dependencies.sh ;;
       python|pyenv|uv) ./scripts/install_python_tools.sh ;;

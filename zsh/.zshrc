@@ -65,3 +65,6 @@ fi
 if (( $+commands[starship] )); then
   eval "$(starship init zsh)"
 fi
+
+# Added by Antigravity
+export PATH="/Users/bodhi/.antigravity/antigravity/bin:$PATH"

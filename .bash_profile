@@ -74,3 +74,4 @@ fi
 if command -v pyenv &> /dev/null; then
 	eval "$(pyenv init -)"
 fi
+export PATH="$PATH:/Users/bodhi/Applications/Visual Studio Code.app/Contents/Resources/app/bin"

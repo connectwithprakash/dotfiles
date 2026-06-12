@@ -13,6 +13,7 @@ brew "ripgrep"
 brew "fd"
 brew "fzf"
 brew "gum"
+brew "shellcheck"
 brew "starship"
 brew "zoxide"
 
@@ -22,8 +23,6 @@ brew "uv"
 brew "ruff"
 
 # Hermes Agent dependencies
-brew "defuddle-cli"
-
 brew "espeak-ng"
 brew "ffmpeg"
 

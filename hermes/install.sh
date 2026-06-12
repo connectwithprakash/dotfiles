@@ -1,76 +1,82 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../scripts/lib.sh
-if ! source "$SCRIPT_DIR/../scripts/lib.sh" 2>/dev/null; then
-  command_exists() { command -v "$1" >/dev/null 2>&1; }
+DOTFILES_HERMES_DIR="$SCRIPT_DIR"
+HERMES_DIR="$HOME/.hermes"
+SKILL_SRC="$DOTFILES_HERMES_DIR/skills/devops/hermes-agent-dotfiles"
+SKILL_DST="$HERMES_DIR/skills/devops/hermes-agent-dotfiles"
+CONFIG_SRC="$DOTFILES_HERMES_DIR/config.yaml"
+CONFIG_DST="$HERMES_DIR/config.yaml"
+LINK_CONFIG=false
+
+usage() {
+  cat <<'EOF'
+Usage: hermes/install.sh [--link-config]
+
+Safely installs Hermes dotfiles-managed assets.
+
+Default behavior:
+  - Requires Hermes to already be installed.
+  - Links the managed dotfiles skill into ~/.hermes/skills/ when present.
+  - Leaves ~/.hermes/config.yaml untouched.
+
+Optional:
+  --link-config   Replace ~/.hermes/config.yaml with a symlink to the repo copy.
+                  The existing config is backed up first. Use only after manually
+                  verifying the repo config contains no secrets and is current.
+EOF
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --link-config) LINK_CONFIG=true ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+if ! command -v hermes >/dev/null 2>&1; then
+  echo "Error: hermes is not installed or not on PATH." >&2
+  echo "Install Hermes first, then rerun this script." >&2
+  echo "Official install: curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash" >&2
+  exit 1
 fi
 
-HERMES_HOME="$HOME/.hermes"
-HERMES_REPO="$HERMES_HOME/hermes-agent"
+mkdir -p "$HERMES_DIR/skills/devops"
 
-# Install Hermes Agent
-install_hermes() {
-  if [ -d "$HERMES_REPO" ]; then
-    echo "Hermes Agent already installed, updating..."
-    cd "$HERMES_REPO"
-    git pull --ff-only origin main || true
-  else
-    echo "Installing Hermes Agent..."
-    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-    return
+if [ -d "$SKILL_SRC" ]; then
+  if [ -e "$SKILL_DST" ] && [ ! -L "$SKILL_DST" ]; then
+    backup="$SKILL_DST.backup.$(date +%Y%m%d%H%M%S)"
+    mv "$SKILL_DST" "$backup"
+    echo "Backed up existing skill directory to $backup"
   fi
-}
+  ln -sfn "$SKILL_SRC" "$SKILL_DST"
+  echo "Linked skill: $SKILL_DST -> $SKILL_SRC"
+else
+  echo "Warning: custom skill not found at $SKILL_SRC; skipping skill symlink" >&2
+fi
 
-# Install extra Python packages not bundled with Hermes
-install_extra_deps() {
-  local venv_python="$HERMES_REPO/venv/bin/python"
-
-  if [ ! -f "$venv_python" ]; then
-    echo "Hermes venv not found at $venv_python. Run the Hermes installer first."
-    return 1
+if [ "$LINK_CONFIG" = true ]; then
+  if [ ! -f "$CONFIG_SRC" ]; then
+    echo "Error: missing dotfiles config at $CONFIG_SRC" >&2
+    exit 1
   fi
 
-  echo "Installing extra dependencies into Hermes venv..."
-
-  if ! command_exists uv; then
-    echo "uv not found. Install it first: brew install uv"
-    return 1
+  if [ -e "$CONFIG_DST" ] && [ ! -L "$CONFIG_DST" ]; then
+    backup="$CONFIG_DST.backup.$(date +%Y%m%d%H%M%S)"
+    cp "$CONFIG_DST" "$backup"
+    echo "Backed up existing config to $backup"
   fi
 
-  # Telegram gateway
-  uv pip install "python-telegram-bot[job-queue]" --python "$venv_python"
+  ln -sfn "$CONFIG_SRC" "$CONFIG_DST"
+  echo "Linked config: $CONFIG_DST -> $CONFIG_SRC"
+else
+  echo "Left live config untouched: $CONFIG_DST"
+  echo "To link it intentionally after review, rerun: $0 --link-config"
+fi
 
-  # Cron scheduling
-  uv pip install croniter --python "$venv_python"
+hermes --help >/dev/null
 
-  # Local TTS (NeuTTS)
-  uv pip install -U "neutts[all]" --python "$venv_python"
-
-  # Voice mode audio
-  uv pip install sounddevice numpy --python "$venv_python"
-
-  echo "Extra dependencies installed!"
-}
-
-# Install gateway as launchd service
-install_gateway_service() {
-  if command_exists hermes; then
-    echo "Installing Hermes gateway service..."
-    hermes gateway install 2>/dev/null || hermes gateway restart 2>/dev/null || true
-    echo "Gateway service installed!"
-  else
-    echo "hermes command not found. Ensure ~/.local/bin is on PATH."
-  fi
-}
-
-# Main
-echo "=== Hermes Agent Setup ==="
-install_hermes
-install_extra_deps
-install_gateway_service
-echo ""
-echo "Hermes Agent setup complete!"
-echo "  Config:  ~/.hermes/.env (add API keys)"
-echo "  Settings: ~/.hermes/config.yaml"
-echo "  Test:    hermes doctor"
+echo "Hermes dotfiles check completed successfully."

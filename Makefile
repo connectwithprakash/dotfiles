@@ -47,21 +47,26 @@ health: ## Run system health check
 
 lint: ## Run shellcheck on all scripts
 	@echo "Running shellcheck..."
+	@command -v shellcheck >/dev/null 2>&1 || { \
+		echo "shellcheck is not installed. Run 'brew install shellcheck' or 'make install-deps'."; \
+		exit 1; \
+	}
 	@shellcheck -x bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
-		.claude/install.sh hermes/install.sh \
-		2>&1 || true
+		.claude/install.sh hermes/install.sh
 	@echo "Done."
 
-test: lint ## Run all tests (currently just lint)
+test: lint ## Run all tests (currently lint + shell syntax checks)
 	@echo "Syntax checking all scripts..."
-	@for f in bootstrap.sh update_dotfiles.sh install.sh dotfiles \
+	@failed=0; \
+	for f in bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
 		.claude/install.sh hermes/install.sh; do \
-		bash -n "$$f" && echo "  [ok] $$f" || echo "  [FAIL] $$f"; \
-	done
+		if bash -n "$$f"; then echo "  [ok] $$f"; else echo "  [FAIL] $$f"; failed=1; fi; \
+	done; \
+	if [ "$$failed" -ne 0 ]; then exit "$$failed"; fi
 	@echo "All checks passed."
 
 macos: ## Apply macOS system preferences
