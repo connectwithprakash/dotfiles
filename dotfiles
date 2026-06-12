@@ -55,7 +55,10 @@ show_help() {
   echo "  dotfiles [command]"
   echo ""
   echo -e "${CYAN}Commands:${NC}"
-  echo -e "  ${GREEN}sync${NC}       Sync dotfiles between home directory and repository"
+  echo -e "  ${GREEN}sync${NC}       Sync dotfiles interactively"
+  echo -e "  ${GREEN}apply${NC}      Apply repo dotfiles to home non-interactively"
+  echo -e "  ${GREEN}capture${NC}    Capture home dotfiles into repo non-interactively"
+  echo -e "  ${GREEN}list${NC}       List managed dotfiles and live paths"
   echo -e "  ${GREEN}install${NC}    Install or update components"
   echo -e "  ${GREEN}update${NC}     Update all installed tools and plugins"
   echo -e "  ${GREEN}status${NC}     Show current status of dotfiles and components"
@@ -65,9 +68,119 @@ show_help() {
   echo -e "${CYAN}Examples:${NC}"
   echo "  dotfiles              # Launch interactive menu"
   echo "  dotfiles sync         # Sync dotfiles interactively"
+  echo "  dotfiles apply        # Apply all repo-managed dotfiles to home"
+  echo "  dotfiles apply zsh/starship.toml"
+  echo "  dotfiles capture .aliases"
   echo "  dotfiles install      # Install components interactively"
   echo "  dotfiles status       # Show current status"
   echo "  dotfiles health       # Run health check"
+}
+
+# Resolve optional command arguments to managed dotfiles. With no arguments,
+# operate on every managed file.
+resolve_managed_targets() {
+  resolved_targets=()
+
+  if [ "$#" -eq 0 ]; then
+    resolved_targets=("${managed_dotfiles[@]}")
+    return 0
+  fi
+
+  local requested file matched
+  for requested in "$@"; do
+    matched=false
+    for file in "${managed_dotfiles[@]}"; do
+      if [ "$requested" = "$file" ] || [ "$requested" = "$(basename "$file")" ]; then
+        resolved_targets+=("$file")
+        matched=true
+        break
+      fi
+    done
+    if [ "$matched" = false ]; then
+      print_error "Unknown managed dotfile: $requested"
+      print_info "Run 'dotfiles list' to see valid names."
+      return 1
+    fi
+  done
+}
+
+list_managed_dotfiles() {
+  print_header "Managed Dotfiles"
+  local file
+  for file in "${managed_dotfiles[@]}"; do
+    echo "$file -> $(get_home_path "$file")"
+  done
+}
+
+backup_live_file() {
+  local home_path="$1"
+  [ -e "$home_path" ] || return 0
+
+  local backup_dir
+  backup_dir="$HOME/.dotfiles-backup/$(date +%Y-%m-%d_%H%M%S)"
+  local relative_path="${home_path#"$HOME"/}"
+  local backup_path="$backup_dir/$relative_path"
+  mkdir -p "$(dirname "$backup_path")"
+  cp "$home_path" "$backup_path"
+}
+
+apply_repo_to_home() {
+  resolve_managed_targets "$@" || return 1
+  local file repo_path home_path label changed=0 skipped=0
+
+  for file in "${resolved_targets[@]}"; do
+    repo_path="$DOTFILES_DIR/$file"
+    home_path="$(get_home_path "$file")"
+    label="$(get_dotfile_label "$file")"
+
+    if [ ! -f "$repo_path" ]; then
+      print_error "$label missing in repository"
+      continue
+    fi
+
+    if [ -f "$home_path" ] && diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
+      echo "No changes in $label (skipped)"
+      skipped=$((skipped + 1))
+      continue
+    fi
+
+    backup_live_file "$home_path"
+    mkdir -p "$(dirname "$home_path")"
+    cp "$repo_path" "$home_path"
+    echo "Applied $label to $home_path"
+    changed=$((changed + 1))
+  done
+
+  print_success "Applied $changed file(s); skipped $skipped unchanged file(s)."
+}
+
+capture_home_to_repo() {
+  resolve_managed_targets "$@" || return 1
+  local file repo_path home_path label changed=0 skipped=0
+
+  for file in "${resolved_targets[@]}"; do
+    repo_path="$DOTFILES_DIR/$file"
+    home_path="$(get_home_path "$file")"
+    label="$(get_dotfile_label "$file")"
+
+    if [ ! -f "$home_path" ]; then
+      print_error "$label missing at $home_path"
+      continue
+    fi
+
+    if [ -f "$repo_path" ] && diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
+      echo "No changes in $label (skipped)"
+      skipped=$((skipped + 1))
+      continue
+    fi
+
+    mkdir -p "$(dirname "$repo_path")"
+    cp "$home_path" "$repo_path"
+    echo "Captured $home_path to $label"
+    changed=$((changed + 1))
+  done
+
+  print_success "Captured $changed file(s); skipped $skipped unchanged file(s)."
 }
 
 # Show status
@@ -331,6 +444,17 @@ case "${1:-menu}" in
   sync)
     shift
     "$DOTFILES_DIR/update_dotfiles.sh" "$@"
+    ;;
+  apply)
+    shift
+    apply_repo_to_home "$@"
+    ;;
+  capture)
+    shift
+    capture_home_to_repo "$@"
+    ;;
+  list)
+    list_managed_dotfiles
     ;;
   install)
     shift
