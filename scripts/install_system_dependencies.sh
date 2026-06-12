@@ -23,11 +23,20 @@ install_brew() {
   fi
 }
 
-# macOS: use Brewfile (declarative, single command)
+# macOS: use Brewfile (declarative, single command). Bootstrap should install
+# missing dependencies, not perform broad package maintenance. Use --no-upgrade
+# so a fresh run does not upgrade unrelated/outdated formulae and fail on link
+# conflicts outside this repo's setup scope.
 install_with_brewfile() {
   install_brew
-  echo "Installing dependencies from Brewfile..."
-  brew bundle --file="$DOTFILES_DIR/Brewfile"
+  echo "Checking dependencies from Brewfile..."
+  if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$DOTFILES_DIR/Brewfile"; then
+    echo "All Homebrew dependencies are already installed!"
+    return 0
+  fi
+
+  echo "Installing missing dependencies from Brewfile without upgrading existing packages..."
+  HOMEBREW_NO_AUTO_UPDATE=1 brew bundle install --file="$DOTFILES_DIR/Brewfile" --no-upgrade
   echo "All Homebrew dependencies installed!"
 }
 

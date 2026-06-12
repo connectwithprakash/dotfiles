@@ -103,18 +103,26 @@ fi
 # ── Global Python tools via uv ───────────────────────────────────────────────
 
 if command_exists uv; then
-  # uv tool install replaces pipx — isolated environments, faster installs
+  # uv tool install replaces pipx — isolated environments, faster installs.
+  # Some machines already have these executables from pipx/Homebrew/a previous
+  # partial uv install. In that case, do not overwrite them during bootstrap.
   UV_TOOLS=(
     "poetry"
     "ipython"
   )
 
+  uv_bin_dir="$(uv tool dir --bin 2>/dev/null || echo "$HOME/.local/bin")"
+
   for tool in "${UV_TOOLS[@]}"; do
-    if ! uv tool list 2>/dev/null | grep -q "^$tool "; then
+    if uv tool list 2>/dev/null | grep -q "^$tool "; then
+      echo "$tool is already installed as a uv tool."
+    elif command_exists "$tool"; then
+      echo "$tool executable already exists at $(command -v "$tool"); skipping uv tool install."
+    elif [ -x "$uv_bin_dir/$tool" ]; then
+      echo "$tool executable already exists at $uv_bin_dir/$tool; skipping uv tool install."
+    else
       echo "Installing $tool via uv..."
       uv tool install "$tool"
-    else
-      echo "$tool is already installed."
     fi
   done
 else
