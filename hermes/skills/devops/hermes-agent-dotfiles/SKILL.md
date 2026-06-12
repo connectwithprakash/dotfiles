@@ -56,7 +56,8 @@ Use when syncing Hermes-related files in `~/Developer/dotfiles/hermes/` with the
    ./hermes/install.sh --link-config
    ```
    The installer must back up the existing live config first.
-8. Verify before pushing:
+8. Keep sync/status behavior on one shared mapping. If `dotfiles status` and `update_dotfiles.sh` both know about managed files, source the same mapping file from both rather than duplicating arrays. See `references/sync-status-parity.md`.
+9. Verify before pushing:
    ```bash
    make test
    ./dotfiles status
@@ -88,3 +89,4 @@ A clean final state should show `0 0` divergence and `./dotfiles status` should 
 - Homebrew 6+ may require tap trust for third-party taps; do not blanket-trust taps without user intent.
 - Machine-specific PATH entries may belong in `~/.path` or `~/.extra` rather than portable shared files.
 - If `hermes doctor` reports config version drift, use `hermes config migrate` rather than hand-editing unknown new schema fields.
+- When adding a sourced shared mapping file, Shellcheck may raise SC2034 for arrays consumed by other scripts. Use a targeted suppression with a comment rather than disabling lint broadly.
