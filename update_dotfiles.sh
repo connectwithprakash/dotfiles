@@ -5,45 +5,15 @@ set -e
 # Define root directory (portable, no realpath needed)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source shared library
+# Source shared libraries
 source "$ROOT_DIR/scripts/lib.sh"
+source "$ROOT_DIR/scripts/managed_dotfiles.sh"
 
 # Ensure root directory exists
 if [ ! -d "$ROOT_DIR" ]; then
   echo "Root directory '$ROOT_DIR' not found."
   exit 1
 fi
-
-# List dot files in the project structure
-dotfiles=(
-  ".aliases"
-  ".bash_profile"
-  ".bash_prompt"
-  ".editorconfig"
-  ".exports"
-  ".functions"
-  ".gitconfig"
-  ".gitignore"
-  ".inputrc"
-  ".tmux.conf"
-  ".vimrc"
-)
-
-# Additional dot files inside zsh directory with their relative paths
-zsh_dotfiles=(
-  "zsh/.zshrc"
-  "zsh/starship.toml"
-)
-
-# Map repo path to home path (handles special cases)
-get_home_path() {
-  local file="$1"
-  local home_file="${file#zsh/}"
-  case "$home_file" in
-    starship.toml) echo "$HOME/.config/starship.toml" ;;
-    *) echo "$HOME/$home_file" ;;
-  esac
-}
 
 # Function to show differences in files
 show_diff() {
@@ -52,15 +22,18 @@ show_diff() {
   local home_path
   home_path="$(get_home_path "$file")"
 
+  local label
+  label="$(get_dotfile_label "$file")"
+
   if ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
     if [ "$HAS_GUM" = true ]; then
-      gum style --border rounded --border-foreground 212 --padding "0 1" "Differences in: $home_file"
+      gum style --border rounded --border-foreground 212 --padding "0 1" "Differences in: $label"
       echo ""
       echo "Home: $home_path"
       echo "Repo: $repo_path"
       echo ""
     else
-      echo "Differences in dotfile: $home_file"
+      echo "Differences in dotfile: $label"
       echo "---------------------------------"
       echo "File path in home directory: $home_path"
       echo "File path in dotfiles repo: $repo_path"
@@ -79,16 +52,19 @@ sync_to_repo() {
   local home_path
   home_path="$(get_home_path "$file")"
 
+  local label
+  label="$(get_dotfile_label "$file")"
+
   if [ -f "$home_path" ]; then
     if ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
       mkdir -p "$(dirname "$repo_path")"
       if [ "$HAS_GUM" = true ]; then
-        gum spin --spinner dot --title "Syncing $home_file..." -- sleep 0.2
+        gum spin --spinner dot --title "Syncing $label..." -- sleep 0.2
       fi
       cp "$home_path" "$repo_path"
-      echo "Synced $home_file to repository"
+      echo "Synced $label to repository"
     else
-      echo "No changes in $home_file (skipped)"
+      echo "No changes in $label (skipped)"
     fi
   fi
 }
@@ -100,16 +76,20 @@ sync_to_home() {
   local home_path
   home_path="$(get_home_path "$file")"
 
+  local label
+  label="$(get_dotfile_label "$file")"
+
   if [ -f "$repo_path" ]; then
     if ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
       backup_file "$home_path"
+      mkdir -p "$(dirname "$home_path")"
       if [ "$HAS_GUM" = true ]; then
-        gum spin --spinner dot --title "Syncing $home_file..." -- sleep 0.2
+        gum spin --spinner dot --title "Syncing $label..." -- sleep 0.2
       fi
       cp "$repo_path" "$home_path"
-      echo "Synced $home_file to home directory"
+      echo "Synced $label to home directory"
     else
-      echo "No changes in $home_file (skipped)"
+      echo "No changes in $label (skipped)"
     fi
   fi
 }
@@ -189,7 +169,7 @@ prompt_select_dotfiles() {
     # Build selection list with status indicators
     selection_list=()
 
-    for file in "${dotfiles[@]}" "${zsh_dotfiles[@]}"; do
+    for file in "${managed_dotfiles[@]}"; do
       status=$(check_file_status "$file")
       if [ "$status" = "modified" ]; then
         selection_list+=("* $file")
@@ -211,7 +191,7 @@ prompt_select_dotfiles() {
       exit 0
     fi
   else
-    for file in "${dotfiles[@]}" "${zsh_dotfiles[@]}"; do
+    for file in "${managed_dotfiles[@]}"; do
       if prompt_yes_no "Do you want to sync $file?"; then
         selected_dotfiles+=("$file")
       fi
