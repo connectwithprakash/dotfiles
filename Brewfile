@@ -22,6 +22,14 @@ brew "pyenv"
 brew "uv"
 brew "ruff"
 
+# Python build dependencies for pyenv
+brew "openssl@3"
+brew "readline"
+brew "sqlite3"
+brew "xz"
+brew "zlib"
+brew "pkg-config"
+
 # Hermes Agent dependencies
 brew "espeak-ng"
 brew "ffmpeg"

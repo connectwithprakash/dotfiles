@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 # Define the font directory and font files
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -41,7 +41,9 @@ if ! command_exists code; then
   exit 0
 fi
 
-# Configure VSCode settings using jq (proper JSON handling)
+# Configure VSCode settings. VS Code settings are JSONC in practice, so jq can
+# fail on comments/trailing commas. Use a small Python JSONC normalizer and keep
+# a backup before rewriting the file as plain JSON.
 echo "Configuring VSCode terminal font..."
 
 SETTINGS_FILE="$HOME/Library/Application Support/Code/User/settings.json"
@@ -50,13 +52,74 @@ if [ ! -f "$SETTINGS_FILE" ]; then
   echo '{}' > "$SETTINGS_FILE"
 fi
 
-if command_exists jq; then
-  # Use jq for safe JSON manipulation
-  jq '. + {"terminal.integrated.fontFamily": "MesloLGS NF"}' "$SETTINGS_FILE" > "${SETTINGS_FILE}.tmp" \
-    && mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
-  echo "VSCode terminal font set to 'MesloLGS NF' via jq."
-else
-  echo "Warning: jq not found. Please manually set terminal.integrated.fontFamily to 'MesloLGS NF' in VS Code settings."
-fi
+python3 - "$SETTINGS_FILE" <<'PY'
+import json
+import pathlib
+import re
+import shutil
+import sys
+from datetime import datetime
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text() if path.exists() else "{}"
+
+def strip_jsonc(source: str) -> str:
+    out = []
+    i = 0
+    in_string = False
+    escape = False
+    while i < len(source):
+        ch = source[i]
+        nxt = source[i + 1] if i + 1 < len(source) else ""
+        if in_string:
+            out.append(ch)
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            i += 1
+            continue
+        if ch == '"':
+            in_string = True
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "/" and nxt == "/":
+            i += 2
+            while i < len(source) and source[i] not in "\r\n":
+                i += 1
+            continue
+        if ch == "/" and nxt == "*":
+            i += 2
+            while i + 1 < len(source) and not (source[i] == "*" and source[i + 1] == "/"):
+                i += 1
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    cleaned = "".join(out)
+    cleaned = re.sub(r",\s*([}\]])", r"\1", cleaned)
+    return cleaned
+
+try:
+    settings = json.loads(strip_jsonc(text) or "{}")
+except json.JSONDecodeError as exc:
+    print(f"Warning: could not parse VS Code settings at {path}: {exc}")
+    print("Leaving settings unchanged; set terminal.integrated.fontFamily manually if needed.")
+    sys.exit(0)
+
+if not isinstance(settings, dict):
+    print(f"Warning: VS Code settings root is not an object in {path}; leaving unchanged.")
+    sys.exit(0)
+
+settings["terminal.integrated.fontFamily"] = "MesloLGS NF"
+backup = path.with_suffix(path.suffix + ".backup." + datetime.now().strftime("%Y%m%d%H%M%S"))
+shutil.copy2(path, backup)
+path.write_text(json.dumps(settings, indent=2, sort_keys=True) + "\n")
+print(f"Backed up VS Code settings to {backup}")
+print("VSCode terminal font set to 'MesloLGS NF'.")
+PY
 
 echo "Fonts installed. Please restart VSCode for changes to take effect."

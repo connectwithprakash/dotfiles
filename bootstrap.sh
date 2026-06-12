@@ -79,6 +79,7 @@ COMPONENTS=(
   "Dotfiles Sync"
   "Zsh + Starship"
   "Neovim"
+  "iTerm2"
   "VS Code"
   "Claude Code"
 )
@@ -110,6 +111,7 @@ run_component_by_name() {
     "Dotfiles Sync")        print_step "$STEP" "$TOTAL" "$name"; syncDotfiles; print_success "Done" ;;
     "Zsh + Starship")       run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/zsh/install.sh" ;;
     "Neovim")               run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/neovim/install.sh" ;;
+    "iTerm2")               run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/iterm2/install.sh" ;;
     "VS Code")              run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/vscode/install.sh" ;;
     "Claude Code")          run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/.claude/install.sh" "--force" ;;
     "macOS Preferences")    _run_macos_prefs ;;
