@@ -11,8 +11,21 @@
 
 set -e
 
-# Get the directory where this script is located
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the repository directory even when this CLI is invoked through a symlink
+# such as ~/.local/bin/dotfiles. macOS readlink does not support -f, so resolve
+# links manually.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  SOURCE_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+  TARGET="$(readlink "$SOURCE")"
+  if [[ "$TARGET" == /* ]]; then
+    SOURCE="$TARGET"
+  else
+    SOURCE="$SOURCE_DIR/$TARGET"
+  fi
+done
+DOTFILES_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+unset SOURCE SOURCE_DIR TARGET
 # shellcheck source=scripts/managed_dotfiles.sh
 source "$DOTFILES_DIR/scripts/managed_dotfiles.sh"
 
