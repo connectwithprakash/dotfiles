@@ -36,6 +36,7 @@ Personal dotfiles repository for managing development environment configurations
 
 **Neovim config** (in `neovim/` directory):
 - `init.lua` - Lua-based Neovim configuration (deployed to `~/.config/nvim/init.lua`)
+- `lazy-lock.json` - lazy.nvim plugin lockfile (deployed to `~/.config/nvim/lazy-lock.json`)
 
 **Zsh dotfiles** (in `zsh/` directory):
 - `.zshrc` - Main Zsh config (Oh My Zsh, plugins, Starship prompt)

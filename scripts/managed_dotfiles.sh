@@ -16,6 +16,7 @@ managed_dotfiles=(
   ".path"
   ".tmux.conf"
   "neovim/init.lua"
+  "neovim/lazy-lock.json"
   "zsh/.zshrc"
   "zsh/starship.toml"
   "hermes/config.yaml"
@@ -29,6 +30,7 @@ get_home_path() {
     zsh/.zshrc) echo "$HOME/.zshrc" ;;
     zsh/starship.toml) echo "$HOME/.config/starship.toml" ;;
     neovim/init.lua) echo "$HOME/.config/nvim/init.lua" ;;
+    neovim/lazy-lock.json) echo "$HOME/.config/nvim/lazy-lock.json" ;;
     hermes/config.yaml) echo "$HOME/.hermes/config.yaml" ;;
     *) echo "$HOME/$file" ;;
   esac

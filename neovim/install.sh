@@ -76,6 +76,14 @@ setup_config() {
   else
     echo "Warning: init.lua not found in the repository."
   fi
+
+  # Use lazy-lock.json for reproducible plugin versions when present.
+  if [ -f "$script_dir/lazy-lock.json" ]; then
+    echo "Copying lazy-lock.json to Neovim configuration directory..."
+    cp "$script_dir/lazy-lock.json" "$config_dir/lazy-lock.json"
+  else
+    echo "Warning: lazy-lock.json not found in the repository."
+  fi
 }
 
 # Install plugins via lazy.nvim (self-bootstrapping, runs on first launch)

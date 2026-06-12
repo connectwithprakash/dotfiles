@@ -30,6 +30,7 @@ require("lazy").setup({
   -- Treesitter (syntax highlighting, indentation, text objects)
   {
     "nvim-treesitter/nvim-treesitter",
+    branch = "master",
     build = ":TSUpdate",
     config = function()
       require("nvim-treesitter.configs").setup({
@@ -59,26 +60,21 @@ require("lazy").setup({
         },
       })
 
-      local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      -- Auto-setup servers installed by Mason
-      require("mason-lspconfig").setup_handlers({
-        function(server_name)
-          lspconfig[server_name].setup({ capabilities = capabilities })
-        end,
-        -- Custom: suppress lua_ls warnings about vim global
-        ["lua_ls"] = function()
-          lspconfig.lua_ls.setup({
-            capabilities = capabilities,
-            settings = {
-              Lua = {
-                diagnostics = { globals = { "vim" } },
-                workspace = { checkThirdParty = false },
-              },
-            },
-          })
-        end,
+      -- Neovim 0.11+ native LSP configuration. mason-lspconfig v2 enables
+      -- installed servers automatically via vim.lsp.enable().
+      vim.lsp.config("*", {
+        capabilities = capabilities,
+      })
+      vim.lsp.config("lua_ls", {
+        capabilities = capabilities,
+        settings = {
+          Lua = {
+            diagnostics = { globals = { "vim" } },
+            workspace = { checkThirdParty = false },
+          },
+        },
       })
 
       -- LSP keybindings (only active when LSP attaches)
