@@ -28,5 +28,6 @@ brew "ffmpeg"
 
 # macOS apps (casks)
 cask "google-chrome"
+cask "iterm2"
 cask "obsidian"
 cask "stats"
