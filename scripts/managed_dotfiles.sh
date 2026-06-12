@@ -15,7 +15,7 @@ managed_dotfiles=(
   ".inputrc"
   ".path"
   ".tmux.conf"
-  ".vimrc"
+  "neovim/init.lua"
   "zsh/.zshrc"
   "zsh/starship.toml"
   "hermes/config.yaml"
@@ -28,6 +28,7 @@ get_home_path() {
   case "$file" in
     zsh/.zshrc) echo "$HOME/.zshrc" ;;
     zsh/starship.toml) echo "$HOME/.config/starship.toml" ;;
+    neovim/init.lua) echo "$HOME/.config/nvim/init.lua" ;;
     hermes/config.yaml) echo "$HOME/.hermes/config.yaml" ;;
     *) echo "$HOME/$file" ;;
   esac

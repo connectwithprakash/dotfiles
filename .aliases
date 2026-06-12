@@ -67,6 +67,10 @@ alias reload="exec ${SHELL} -l"
 # Print each PATH entry on a separate line
 alias path='echo -e "${PATH//:/\\n}"'
 
+# Editor aliases: use Neovim as the configured editor
+alias vi='nvim'
+alias vim='nvim'
+
 # Python aliases
 alias python=python3
 alias py=python3

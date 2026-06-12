@@ -32,7 +32,10 @@ Personal dotfiles repository for managing development environment configurations
 - `.path` - Custom PATH entries (machine-specific)
 - `.inputrc` - Readline configuration (case-insensitive completion, history search)
 - `.tmux.conf` - tmux configuration (Ctrl+a prefix, vim keys, mouse support)
-- `.gitconfig`, `.gitignore`, `.vimrc`, `.editorconfig`
+- `.gitconfig`, `.gitignore`, `.editorconfig`
+
+**Neovim config** (in `neovim/` directory):
+- `init.lua` - Lua-based Neovim configuration (deployed to `~/.config/nvim/init.lua`)
 
 **Zsh dotfiles** (in `zsh/` directory):
 - `.zshrc` - Main Zsh config (Oh My Zsh, plugins, Starship prompt)
