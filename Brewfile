@@ -26,6 +26,9 @@ brew "ruff"
 brew "espeak-ng"
 brew "ffmpeg"
 
+# Fonts
+cask "font-meslo-lg-nerd-font"
+
 # macOS apps (casks)
 cask "google-chrome"
 cask "iterm2"
