@@ -244,80 +244,35 @@ show_dotfile_diffs() {
   return 1
 }
 
-# Show status
+# Show compact dashboard status. Use `dotfiles doctor` for detailed diagnosis.
 show_status() {
   print_header "Dotfiles Status"
 
-  echo -e "${CYAN}Installed Components:${NC}"
-
-  # Zsh
-  if command -v zsh &> /dev/null; then
-    local zsh_ver
-    zsh_ver=$(zsh --version | awk '{print $2}')
-    print_success "Zsh $zsh_ver"
-    [ -d "$HOME/.oh-my-zsh" ] && echo -e "  ${GRAY}-> Oh My Zsh installed${NC}"
-  else
-    echo -e "${GRAY}  - Zsh (not installed)${NC}"
-  fi
-
-  # Neovim
-  if command -v nvim &> /dev/null; then
-    local nvim_ver
-    nvim_ver=$(nvim --version | head -n1 | awk '{print $2}')
-    print_success "Neovim $nvim_ver"
-  else
-    echo -e "${GRAY}  - Neovim (not installed)${NC}"
-  fi
-
-  # VS Code
-  if command -v code &> /dev/null; then
-    local code_ver
-    code_ver=$(code --version 2>/dev/null | head -n1 || echo "unknown")
-    print_success "VS Code $code_ver"
-  else
-    echo -e "  ${GRAY}- VS Code (not installed)${NC}"
-  fi
-
-  # Claude Code
-  if [ -f "$HOME/.claude/settings.json" ]; then
-    print_success "Claude Code (configured)"
-    local skill_count
-    skill_count=$(find "$HOME/.claude/skills" -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-    echo -e "  ${GRAY}-> $skill_count skill(s) installed${NC}"
-  else
-    echo -e "${GRAY}  - Claude Code (not configured)${NC}"
-  fi
-
-  # TUI Tools
-  echo ""
-  echo -e "${CYAN}TUI Tools:${NC}"
-  for tool in gum fzf; do
-    if command -v "$tool" &> /dev/null; then
-      print_success "$tool (installed)"
-    else
-      echo -e "${GRAY}  - $tool (not installed)${NC}"
-    fi
-  done
-
-  # Sync status
-  echo ""
-  echo -e "${CYAN}Sync Status:${NC}"
   cd "$DOTFILES_DIR"
-  if git status --porcelain 2>/dev/null | grep -q .; then
-    print_info "Uncommitted changes in repository"
-  else
-    print_success "Repository is clean"
-  fi
 
+  local repo_dirty=false
+  local upstream_state="no upstream"
+  local ahead=0
+  local behind=0
   local changed=0
   local missing=0
   local total=0
+  local file home_path repo_path label
+
+  if git status --porcelain 2>/dev/null | grep -q .; then
+    repo_dirty=true
+  fi
+
+  if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+    read -r behind ahead < <(git rev-list --left-right --count '@{u}...HEAD')
+    if [ "$ahead" -eq 0 ] && [ "$behind" -eq 0 ]; then
+      upstream_state="synced"
+    else
+      upstream_state="ahead=$ahead behind=$behind"
+    fi
+  fi
 
   for file in "${managed_dotfiles[@]}"; do
-    local home_path
-    local repo_path
-    local label
-
     home_path="$(get_home_path "$file")"
     repo_path="$DOTFILES_DIR/$file"
     label="$(get_dotfile_label "$file")"
@@ -325,17 +280,102 @@ show_status() {
 
     if [ ! -e "$home_path" ] || [ ! -e "$repo_path" ]; then
       missing=$((missing + 1))
-      print_info "$label missing on one side"
     elif ! diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
       changed=$((changed + 1))
-      print_info "$label differs"
     fi
   done
 
-  if [ "$changed" -gt 0 ] || [ "$missing" -gt 0 ]; then
-    print_info "$changed changed and $missing missing of $total managed dotfile(s)"
+  echo -e "${CYAN}Repository:${NC}"
+  if [ "$repo_dirty" = false ]; then
+    print_success "clean working tree"
   else
-    print_success "All $total managed dotfile(s) are synced"
+    print_warning "uncommitted changes"
+    echo "  Inspect: git status --short"
+  fi
+
+  if [ "$upstream_state" = "synced" ]; then
+    print_success "synced with upstream"
+  else
+    print_warning "$upstream_state"
+    [ "$behind" -gt 0 ] && echo "  Pull: git pull"
+    [ "$ahead" -gt 0 ] && echo "  Push: git push"
+  fi
+
+  echo ""
+  echo -e "${CYAN}Managed files:${NC}"
+  if [ "$changed" -eq 0 ] && [ "$missing" -eq 0 ]; then
+    print_success "$total/$total synced"
+  else
+    print_warning "$changed changed, $missing missing of $total managed file(s)"
+    echo "  Inspect: dotfiles diff"
+    echo "  Diagnose: dotfiles doctor"
+  fi
+
+  echo ""
+  echo -e "${CYAN}Components:${NC}"
+  if command -v zsh >/dev/null 2>&1 && [ -d "$HOME/.oh-my-zsh" ] && command -v starship >/dev/null 2>&1; then
+    print_success "Zsh + Starship"
+  else
+    print_warning "Zsh + Starship incomplete"
+    echo "  Fix: dotfiles install zsh"
+  fi
+
+  if command -v nvim >/dev/null 2>&1; then
+    local nvim_ver
+    nvim_ver=$(nvim --version | head -n1 | awk '{print $2}')
+    print_success "Neovim $nvim_ver"
+  else
+    print_warning "Neovim missing"
+    echo "  Fix: dotfiles install nvim"
+  fi
+
+  if [ "$(uname -s)" = "Darwin" ]; then
+    if [ -f "$HOME/Library/Application Support/iTerm2/DynamicProfiles/hermes-nerd-font.json" ] && [ -f "$HOME/Library/Application Support/iTerm2/Scripts/AutoLaunch/set_hermes_nerd_font_default.py" ]; then
+      print_success "iTerm2 profile"
+    else
+      print_warning "iTerm2 profile incomplete"
+      echo "  Fix: dotfiles install iterm2"
+    fi
+  fi
+
+  if command -v code >/dev/null 2>&1; then
+    local code_ver
+    code_ver=$(code --version 2>/dev/null | head -n1 || echo "unknown")
+    print_success "VS Code $code_ver"
+  else
+    echo -e "${GRAY}  - VS Code not installed${NC}"
+  fi
+
+  if [ -f "$HOME/.claude/settings.json" ]; then
+    local skill_count
+    skill_count=$(find "$HOME/.claude/skills" -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+    print_success "Claude Code ($skill_count skill(s))"
+  else
+    echo -e "${GRAY}  - Claude Code not configured${NC}"
+  fi
+
+  echo ""
+  echo -e "${CYAN}Core tools:${NC}"
+  local missing_tools=()
+  for tool in brew git gum fzf fd rg jq starship zoxide pyenv uv ruff; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+      missing_tools+=("$tool")
+    fi
+  done
+
+  if [ "${#missing_tools[@]}" -eq 0 ]; then
+    print_success "all core tools installed"
+  else
+    print_warning "missing: ${missing_tools[*]}"
+    echo "  Fix: dotfiles install system"
+  fi
+
+  echo ""
+  echo -e "${CYAN}Next:${NC}"
+  if [ "$repo_dirty" = false ] && [ "$upstream_state" = "synced" ] && [ "$changed" -eq 0 ] && [ "$missing" -eq 0 ] && [ "${#missing_tools[@]}" -eq 0 ]; then
+    print_success "ready"
+  else
+    echo "  dotfiles doctor"
   fi
 }
 
