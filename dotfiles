@@ -71,6 +71,7 @@ show_help() {
   echo -e "  ${GREEN}sync${NC}       Sync dotfiles interactively"
   echo -e "  ${GREEN}apply${NC}      Apply repo dotfiles to home non-interactively"
   echo -e "  ${GREEN}capture${NC}    Capture home dotfiles into repo non-interactively"
+  echo -e "  ${GREEN}diff${NC}       Show repo-vs-home differences for managed dotfiles"
   echo -e "  ${GREEN}list${NC}       List managed dotfiles and live paths"
   echo -e "  ${GREEN}install${NC}    Install or update components"
   echo -e "  ${GREEN}update${NC}     Update all installed tools and plugins"
@@ -84,6 +85,8 @@ show_help() {
   echo "  dotfiles apply        # Apply all repo-managed dotfiles to home"
   echo "  dotfiles apply zsh/starship.toml"
   echo "  dotfiles capture .aliases"
+  echo "  dotfiles diff"
+  echo "  dotfiles diff zsh/starship.toml"
   echo "  dotfiles install      # Install components interactively"
   echo "  dotfiles install zsh  # Install/apply only Zsh + Starship"
   echo "  dotfiles install --dry-run zsh iterm2"
@@ -196,6 +199,46 @@ capture_home_to_repo() {
   done
 
   print_success "Captured $changed file(s); skipped $skipped unchanged file(s)."
+}
+
+show_dotfile_diffs() {
+  resolve_managed_targets "$@" || return 1
+  local file repo_path home_path label changed=0 missing=0 unchanged=0
+
+  for file in "${resolved_targets[@]}"; do
+    repo_path="$DOTFILES_DIR/$file"
+    home_path="$(get_home_path "$file")"
+    label="$(get_dotfile_label "$file")"
+
+    if [ ! -e "$repo_path" ] || [ ! -e "$home_path" ]; then
+      print_error "$label missing on one side"
+      echo "  Home: $home_path"
+      echo "  Repo: $repo_path"
+      missing=$((missing + 1))
+      continue
+    fi
+
+    if diff -q "$home_path" "$repo_path" >/dev/null 2>&1; then
+      unchanged=$((unchanged + 1))
+      continue
+    fi
+
+    changed=$((changed + 1))
+    print_header "Diff: $label"
+    echo "Home: $home_path"
+    echo "Repo: $repo_path"
+    echo ""
+    diff -u --label "home:$home_path" --label "repo:$repo_path" "$home_path" "$repo_path" || true
+    echo ""
+  done
+
+  if [ "$changed" -eq 0 ] && [ "$missing" -eq 0 ]; then
+    print_success "No differences across ${#resolved_targets[@]} managed dotfile(s)."
+    return 0
+  fi
+
+  print_info "$changed changed, $missing missing, $unchanged unchanged managed dotfile(s)."
+  return 1
 }
 
 # Show status
@@ -410,7 +453,9 @@ show_menu() {
       "Manage your development environment"
 
     CHOICE=$(gum choose \
-      "Sync Dotfiles" \
+      "Apply Repo to Home" \
+      "Capture Home to Repo" \
+      "Show Diffs" \
       "Install Components" \
       "Update Tools" \
       "Show Status" \
@@ -419,7 +464,9 @@ show_menu() {
       "Exit")
 
     case "$CHOICE" in
-      "Sync Dotfiles") "$DOTFILES_DIR/update_dotfiles.sh" ;;
+      "Apply Repo to Home") apply_repo_to_home ;;
+      "Capture Home to Repo") capture_home_to_repo ;;
+      "Show Diffs") show_dotfile_diffs ;;
       "Install Components") "$DOTFILES_DIR/bootstrap.sh" ;;
       "Update Tools") update_tools ;;
       "Show Status") show_status ;;
@@ -429,24 +476,28 @@ show_menu() {
     esac
   else
     print_header "Dotfiles Manager"
-    echo "1) Sync Dotfiles"
-    echo "2) Install Components"
-    echo "3) Update Tools"
-    echo "4) Show Status"
-    echo "5) Run Health Check"
-    echo "6) Help"
-    echo "7) Exit"
+    echo "1) Apply Repo to Home"
+    echo "2) Capture Home to Repo"
+    echo "3) Show Diffs"
+    echo "4) Install Components"
+    echo "5) Update Tools"
+    echo "6) Show Status"
+    echo "7) Run Health Check"
+    echo "8) Help"
+    echo "9) Exit"
     echo ""
-    read -rp "Choose an option (1-7): " choice
+    read -rp "Choose an option (1-9): " choice
 
     case "$choice" in
-      1) "$DOTFILES_DIR/update_dotfiles.sh" ;;
-      2) "$DOTFILES_DIR/bootstrap.sh" ;;
-      3) update_tools ;;
-      4) show_status ;;
-      5) run_health_check ;;
-      6) show_help ;;
-      7) echo "Goodbye!"; exit 0 ;;
+      1) apply_repo_to_home ;;
+      2) capture_home_to_repo ;;
+      3) show_dotfile_diffs ;;
+      4) "$DOTFILES_DIR/bootstrap.sh" ;;
+      5) update_tools ;;
+      6) show_status ;;
+      7) run_health_check ;;
+      8) show_help ;;
+      9) echo "Goodbye!"; exit 0 ;;
       *) echo "Invalid option"; exit 1 ;;
     esac
   fi
@@ -467,6 +518,10 @@ case "${1:-menu}" in
   capture)
     shift
     capture_home_to_repo "$@"
+    ;;
+  diff)
+    shift
+    show_dotfile_diffs "$@"
     ;;
   list)
     list_managed_dotfiles
