@@ -293,3 +293,49 @@ vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<CR>")
 vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<CR>")
 vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<CR>")
 vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<CR>")
+
+-- Open an interactive terminal without leaving Neovim.
+vim.keymap.set("n", "<leader>rt", "<cmd>belowright split | resize 15 | terminal<CR>", { desc = "Open terminal" })
+
+-- Run the current file in a split terminal. Saves first, then chooses a runner
+-- from the buffer filetype. Press i/a in the terminal to interact, and
+-- Ctrl-\\ Ctrl-n to return to normal mode.
+local run_current_file = function()
+  local file = vim.fn.expand("%:p")
+  if file == "" then
+    vim.notify("Save the buffer to a file before running it", vim.log.levels.WARN)
+    return
+  end
+
+  vim.cmd.write()
+
+  local escaped_file = vim.fn.shellescape(file)
+  local runners = {
+    python = "python3 " .. escaped_file,
+    javascript = "node " .. escaped_file,
+    typescript = "tsx " .. escaped_file,
+    sh = "bash " .. escaped_file,
+    bash = "bash " .. escaped_file,
+    zsh = "zsh " .. escaped_file,
+    lua = "lua " .. escaped_file,
+    go = "go run " .. escaped_file,
+    rust = "cargo run",
+    ruby = "ruby " .. escaped_file,
+  }
+
+  local command = runners[vim.bo.filetype]
+  if not command then
+    vim.notify("No runner configured for filetype: " .. vim.bo.filetype, vim.log.levels.WARN)
+    return
+  end
+
+  vim.cmd("belowright split")
+  vim.cmd("resize 15")
+  vim.cmd("terminal " .. command)
+  vim.cmd("startinsert")
+end
+
+vim.keymap.set("n", "<leader>rr", run_current_file, { desc = "Run current file" })
+
+-- Easier exit from terminal mode.
+vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n>]], { desc = "Exit terminal mode" })
