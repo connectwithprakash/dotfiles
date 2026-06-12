@@ -43,9 +43,7 @@ ahead = "⇡${count}"
 behind = "⇣${count}"
 diverged = "⇕⇡${ahead_count}⇣${behind_count}"
 modified = "!${count}"
-# Hide untracked-file counts to keep repo prompts quiet; use `git status --short`
-# when you need details.
-untracked = ""
+untracked = "?${count}"
 staged = "+${count}"
 
 [python]
