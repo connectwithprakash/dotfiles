@@ -80,18 +80,21 @@ require("lazy").setup({
       -- LSP keybindings (only active when LSP attaches)
       vim.api.nvim_create_autocmd("LspAttach", {
         callback = function(ev)
-          local opts = { buffer = ev.buf }
-          vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-          vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
-          vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-          vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
-          vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-          vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-          vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
-          vim.keymap.set("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, opts)
-          vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
-          vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
-          vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, opts)
+          local function map(mode, lhs, rhs, desc)
+            vim.keymap.set(mode, lhs, rhs, { buffer = ev.buf, desc = desc })
+          end
+
+          map("n", "gd", vim.lsp.buf.definition, "Go to definition")
+          map("n", "gD", vim.lsp.buf.declaration, "Go to declaration")
+          map("n", "gr", vim.lsp.buf.references, "Find references")
+          map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
+          map("n", "K", vim.lsp.buf.hover, "Hover documentation")
+          map("n", "<leader>rn", vim.lsp.buf.rename, "Rename symbol")
+          map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
+          map("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, "Format buffer")
+          map("n", "[d", vim.diagnostic.goto_prev, "Previous diagnostic")
+          map("n", "]d", vim.diagnostic.goto_next, "Next diagnostic")
+          map("n", "<leader>e", vim.diagnostic.open_float, "Show diagnostic")
         end,
       })
     end,
@@ -234,7 +237,17 @@ require("lazy").setup({
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
-    config = true,
+    config = function()
+      local wk = require("which-key")
+      wk.setup()
+      wk.add({
+        { "<leader>c", group = "code" },
+        { "<leader>e", desc = "Show diagnostic" },
+        { "<leader>f", group = "find" },
+        { "<leader>h", group = "hunks" },
+        { "<leader>r", group = "run/rename" },
+      })
+    end,
   },
 })
 
