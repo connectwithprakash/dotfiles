@@ -34,9 +34,10 @@ source "$DOTFILES_DIR/scripts/managed_dotfiles.sh"
 GREEN='\033[0;32m' BLUE='\033[0;34m' YELLOW='\033[1;33m'
 RED='\033[0;31m' CYAN='\033[0;36m' GRAY='\033[0;90m' NC='\033[0m'
 
-# Check if gum is available
+# Check if gum is available. Only use it for interactive terminals so scripted
+# tests can drive the fallback menu with stdin.
 HAS_GUM=false
-if command -v gum &> /dev/null; then
+if command -v gum &> /dev/null && [ -t 0 ] && [ -z "${DOTFILES_NO_GUM:-}" ]; then
   HAS_GUM=true
 fi
 
@@ -619,49 +620,52 @@ update_tools() {
 
 # Main menu
 show_menu() {
+  show_status
+  echo ""
+
   if [ "$HAS_GUM" = true ]; then
     gum style \
       --border double \
       --border-foreground 212 \
-      --padding "1 2" \
+      --padding "0 2" \
       --margin "1 0" \
       "Dotfiles Manager" \
       "" \
-      "Manage your development environment"
+      "Choose an action"
 
     CHOICE=$(gum choose \
+      "Run Doctor" \
+      "Show Diffs" \
       "Apply Repo to Home" \
       "Capture Home to Repo" \
-      "Show Diffs" \
       "Install Components" \
       "Update Tools" \
       "Show Status" \
-      "Run Doctor" \
       "Run Health Check" \
       "Help" \
       "Exit")
 
     case "$CHOICE" in
+      "Run Doctor") run_doctor ;;
+      "Show Diffs") show_dotfile_diffs ;;
       "Apply Repo to Home") apply_repo_to_home ;;
       "Capture Home to Repo") capture_home_to_repo ;;
-      "Show Diffs") show_dotfile_diffs ;;
       "Install Components") "$DOTFILES_DIR/bootstrap.sh" ;;
       "Update Tools") update_tools ;;
       "Show Status") show_status ;;
-      "Run Doctor") run_doctor ;;
       "Run Health Check") run_health_check ;;
       "Help") show_help ;;
       "Exit") echo "Goodbye!"; exit 0 ;;
     esac
   else
-    print_header "Dotfiles Manager"
-    echo "1) Apply Repo to Home"
-    echo "2) Capture Home to Repo"
-    echo "3) Show Diffs"
-    echo "4) Install Components"
-    echo "5) Update Tools"
-    echo "6) Show Status"
-    echo "7) Run Doctor"
+    print_header "Dotfiles Manager - Actions"
+    echo "1) Run Doctor"
+    echo "2) Show Diffs"
+    echo "3) Apply Repo to Home"
+    echo "4) Capture Home to Repo"
+    echo "5) Install Components"
+    echo "6) Update Tools"
+    echo "7) Show Status"
     echo "8) Run Health Check"
     echo "9) Help"
     echo "10) Exit"
@@ -669,13 +673,13 @@ show_menu() {
     read -rp "Choose an option (1-10): " choice
 
     case "$choice" in
-      1) apply_repo_to_home ;;
-      2) capture_home_to_repo ;;
-      3) show_dotfile_diffs ;;
-      4) "$DOTFILES_DIR/bootstrap.sh" ;;
-      5) update_tools ;;
-      6) show_status ;;
-      7) run_doctor ;;
+      1) run_doctor ;;
+      2) show_dotfile_diffs ;;
+      3) apply_repo_to_home ;;
+      4) capture_home_to_repo ;;
+      5) "$DOTFILES_DIR/bootstrap.sh" ;;
+      6) update_tools ;;
+      7) show_status ;;
       8) run_health_check ;;
       9) show_help ;;
       10) echo "Goodbye!"; exit 0 ;;
