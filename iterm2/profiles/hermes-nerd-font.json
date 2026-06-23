@@ -10,9 +10,9 @@
       "Use Bold Font": true,
       "Use Built-In Powerline Glyphs": true,
       "ASCII Ligatures": false,
-      "Transparency": 0.12,
+      "Transparency": 0.03,
       "Blur": true,
-      "Blur Radius": 14,
+      "Blur Radius": 20,
       "Background Color": {
         "Color Space": "sRGB",
         "Red Component": 0.03529411764705882,
@@ -90,7 +90,7 @@
         "Blue Component": 0.6862745098039216,
         "Alpha Component": 1
       },
-      "Minimum Contrast": 0.25
+      "Minimum Contrast": 0.35
     }
   ]
 }
