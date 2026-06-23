@@ -9,7 +9,45 @@
       "Use Non-ASCII Font": true,
       "Use Bold Font": true,
       "Use Built-In Powerline Glyphs": true,
-      "ASCII Ligatures": false
+      "ASCII Ligatures": false,
+      "Transparency": 0.12,
+      "Blur": true,
+      "Blur Radius": 14,
+      "Background Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.03529411764705882,
+        "Green Component": 0.047058823529411764,
+        "Blue Component": 0.08627450980392157,
+        "Alpha Component": 1
+      },
+      "Foreground Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.8980392156862745,
+        "Green Component": 0.9215686274509803,
+        "Blue Component": 0.9607843137254902,
+        "Alpha Component": 1
+      },
+      "Cursor Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.5764705882352941,
+        "Green Component": 0.6313725490196078,
+        "Blue Component": 0.9803921568627451,
+        "Alpha Component": 1
+      },
+      "Selected Text Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.8980392156862745,
+        "Green Component": 0.9215686274509803,
+        "Blue Component": 0.9607843137254902,
+        "Alpha Component": 1
+      },
+      "Selection Color": {
+        "Color Space": "sRGB",
+        "Red Component": 0.19215686274509805,
+        "Green Component": 0.2235294117647059,
+        "Blue Component": 0.30980392156862746,
+        "Alpha Component": 1
+      }
     }
   ]
 }
