@@ -2,11 +2,15 @@
 # Install: brew bundle --file=Brewfile
 # Check:   brew bundle check --file=Brewfile
 
+# Third-party taps
+tap "connectwithprakash/tap"
+
 # CLI tools
 brew "gh"
 brew "jq"
 brew "tree"
 brew "btop"
+brew "diskard"
 brew "tmux"
 brew "neovim"
 brew "ripgrep"
