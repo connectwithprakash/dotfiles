@@ -55,6 +55,8 @@ make install-force      # Install everything without prompts
 make install-zsh        # Install just Zsh
 make install-neovim     # Install just Neovim
 make lint               # Run shellcheck on all scripts
+make install-hermes      # Install Hermes Agent + extra dependencies
+make install-obsidian-backup  # Opt in to the Obsidian vault launchd backup
 make test               # Run all validation
 make macos              # Apply macOS system preferences
 ```
