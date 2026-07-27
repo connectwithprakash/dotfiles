@@ -61,6 +61,16 @@ make test               # Run all validation
 make macos              # Apply macOS system preferences
 ```
 
+### Obsidian vault backup
+
+The Obsidian vault backup is an opt-in macOS LaunchAgent. Install it with:
+
+```bash
+make install-obsidian-backup
+```
+
+The dotfiles target is only the installation hook. The canonical runner, configuration, LaunchAgent plist, and schedule live in the [agent-skills repository](https://github.com/connectwithprakash/agent-skills/tree/main/automations/obsidian-vault-backup). The backup runs at login, noon, and 6:00 PM local time, and can also be triggered manually after important work.
+
 ## Syncing Dotfiles
 
 ```bash
