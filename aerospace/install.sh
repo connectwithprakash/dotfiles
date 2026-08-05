@@ -37,15 +37,27 @@ install_aerospace() {
 }
 
 setup_config() {
-  local script_dir
+  local script_dir target_config
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  target_config="$HOME/.aerospace.toml"
 
-  if [ -f "$script_dir/aerospace.toml" ]; then
-    echo "Copying aerospace.toml to \$HOME/.aerospace.toml..."
-    cp "$script_dir/aerospace.toml" "$HOME/.aerospace.toml"
-  else
+  if [ ! -f "$script_dir/aerospace.toml" ]; then
     echo "Warning: aerospace.toml not found in the repository."
+    return
   fi
+
+  if [ -L "$target_config" ]; then
+    rm "$target_config"
+  elif [ -f "$target_config" ]; then
+    local backup_dir="$HOME/.dotfiles-backup/$(date +%Y-%m-%d_%H%M%S)"
+    echo "Backing up existing $target_config to $backup_dir..."
+    mkdir -p "$backup_dir"
+    cp "$target_config" "$backup_dir/aerospace.toml"
+    rm "$target_config"
+  fi
+
+  echo "Symlinking $target_config -> $script_dir/aerospace.toml"
+  ln -s "$script_dir/aerospace.toml" "$target_config"
 }
 
 check_health() {
@@ -57,8 +69,10 @@ check_health() {
     echo "  [missing] AeroSpace.app is not installed."
   fi
 
-  if [ -f "$HOME/.aerospace.toml" ]; then
-    echo "  [ok] ~/.aerospace.toml exists."
+  if [ -L "$HOME/.aerospace.toml" ]; then
+    echo "  [ok] ~/.aerospace.toml is symlinked to the repo."
+  elif [ -f "$HOME/.aerospace.toml" ]; then
+    echo "  [warn] ~/.aerospace.toml exists but is a plain file, not a symlink."
   else
     echo "  [missing] ~/.aerospace.toml not found."
   fi

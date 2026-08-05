@@ -127,8 +127,8 @@ Files are backed up to `~/.dotfiles-backup/` before being overwritten.
 │   ├── settings.json
 │   └── skills/
 ├── aerospace/
-│   ├── install.sh        # AeroSpace install + config sync
-│   └── aerospace.toml    # Tiling window manager configuration
+│   ├── install.sh        # AeroSpace install + symlinks config into place
+│   └── aerospace.toml    # Tiling window manager configuration (edits apply immediately)
 └── .github/
     └── workflows/
         └── lint.yml      # Shellcheck CI
