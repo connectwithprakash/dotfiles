@@ -1,5 +1,5 @@
 .PHONY: install install-force install-deps install-pipx install-zsh install-neovim \
-       install-vscode install-claude install-hermes install-aerospace sync status health test lint macos \
+       install-vscode install-claude install-hermes install-aerospace install-obsidian-backup sync status health test lint macos \
        uninstall-zsh backup-zsh help
 
 help: ## Show this help
@@ -42,6 +42,9 @@ install-hermes: ## Install Hermes Agent + extra deps (Telegram, TTS, voice)
 install-aerospace: ## Install AeroSpace tiling window manager
 	@./aerospace/install.sh
 
+install-obsidian-backup: ## Install the opt-in Obsidian vault launchd backup
+	@./scripts/install_obsidian_backup.sh
+
 sync: ## Sync dotfiles (interactive direction choice)
 	@./update_dotfiles.sh
 
@@ -60,7 +63,8 @@ lint: ## Run shellcheck on all scripts
 	@shellcheck -x bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
-		iterm2/install.sh .claude/install.sh hermes/install.sh aerospace/install.sh
+		iterm2/install.sh .claude/install.sh hermes/install.sh aerospace/install.sh \
+		scripts/install_obsidian_backup.sh
 	@echo "Done."
 
 test: lint ## Run all tests (currently lint + shell syntax checks)
@@ -69,7 +73,8 @@ test: lint ## Run all tests (currently lint + shell syntax checks)
 	for f in bootstrap.sh update_dotfiles.sh install.sh dotfiles \
 		scripts/*.sh zsh/install.sh zsh/uninstall.sh zsh/backup_zsh_dotfiles.sh \
 		neovim/install.sh vscode/install.sh vscode/fix_vscode_fonts.sh \
-		iterm2/install.sh .claude/install.sh hermes/install.sh aerospace/install.sh; do \
+		iterm2/install.sh .claude/install.sh hermes/install.sh aerospace/install.sh \
+		scripts/install_obsidian_backup.sh; do \
 		if bash -n "$$f"; then echo "  [ok] $$f"; else echo "  [FAIL] $$f"; failed=1; fi; \
 	done; \
 	if [ "$$failed" -ne 0 ]; then exit "$$failed"; fi
