@@ -242,6 +242,14 @@ show_status() {
     echo -e "${GRAY}  - Claude Code (not configured)${NC}"
   fi
 
+  # AeroSpace
+  if [ -d "/Applications/AeroSpace.app" ]; then
+    print_success "AeroSpace (installed)"
+    [ -f "$HOME/.aerospace.toml" ] && echo -e "  ${GRAY}-> ~/.aerospace.toml configured${NC}"
+  else
+    echo -e "${GRAY}  - AeroSpace (not installed)${NC}"
+  fi
+
   # TUI Tools
   echo ""
   echo -e "${CYAN}TUI Tools:${NC}"

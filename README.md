@@ -13,6 +13,7 @@ Personal development environment configurations for macOS (with partial Linux su
 | **Git** | Aliases, sensible defaults, global ignore |
 | **tmux** | Vim-style keybindings, mouse support, sane defaults |
 | **Claude Code** | Global settings sync (skills delegated to [agent-skills](https://github.com/connectwithprakash/agent-skills) repo) |
+| **AeroSpace** | i3-style tiling window manager, per-app workspace routing, no SIP changes required |
 | **macOS** | System preferences (Finder, Dock, keyboard, screenshots, etc.) |
 | **System** | Homebrew, gh, jq, tree, btop, tmux, ripgrep, fd, fzf, gum, starship, zoxide |
 | **Python** | pyenv (version management), uv (packages/projects), ruff (lint/format) |
@@ -113,6 +114,9 @@ Files are backed up to `~/.dotfiles-backup/` before being overwritten.
 │   ├── install.sh        # Claude Code config sync
 │   ├── settings.json
 │   └── skills/
+├── aerospace/
+│   ├── install.sh        # AeroSpace install + config sync
+│   └── aerospace.toml    # Tiling window manager configuration
 └── .github/
     └── workflows/
         └── lint.yml      # Shellcheck CI

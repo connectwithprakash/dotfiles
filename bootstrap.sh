@@ -82,6 +82,7 @@ COMPONENTS=(
   "iTerm2"
   "VS Code"
   "Claude Code"
+  "AeroSpace"
 )
 
 # macOS-only component
@@ -116,6 +117,7 @@ component_from_arg() {
     iterm|iterm2|terminal) echo "iTerm2" ;;
     vscode|code|visualstudiocode) echo "VS Code" ;;
     claude|claudecode) echo "Claude Code" ;;
+    aerospace|tiling|wm) echo "AeroSpace" ;;
     macos|osx|preferences|macospreferences) echo "macOS Preferences" ;;
     *) return 1 ;;
   esac
@@ -134,6 +136,7 @@ show_usage() {
   echo "  iterm2 | iterm | terminal  -> iTerm2"
   echo "  vscode | code              -> VS Code"
   echo "  claude | claude-code       -> Claude Code"
+  echo "  aerospace | tiling | wm    -> AeroSpace"
   echo "  macos | preferences        -> macOS Preferences"
   echo ""
   echo "Examples:"
@@ -182,6 +185,7 @@ run_component_by_name() {
     "iTerm2")               run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/iterm2/install.sh" ;;
     "VS Code")              run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/vscode/install.sh" ;;
     "Claude Code")          run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/.claude/install.sh" "--force" ;;
+    "AeroSpace")            run_step "$STEP" "$TOTAL" "$name" "$DOTFILES_DIR/aerospace/install.sh" ;;
     "macOS Preferences")    _run_macos_prefs ;;
   esac
 }

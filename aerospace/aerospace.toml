@@ -1,0 +1,42 @@
+# AeroSpace tiling window manager config
+# https://github.com/nikitabobko/AeroSpace
+
+# --- Global tiling behavior ---
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'horizontal'  # force left/right splits, not top/bottom
+
+# --- App routing on window creation ---
+# Only apps listed here get auto-routed. Safari is intentionally NOT listed:
+# macOS does not expose Safari Profile identity to third-party apps (confirmed
+# against two open, unresolved Apple Feedback Assistant reports: FB12320895 /
+# FB12412076), so a bundle-ID rule cannot tell "Work" apart from "Innovation
+# Labs" Safari windows. Instead, place each Safari window on its target
+# workspace manually once (alt-1 / alt-2 to switch) -- AeroSpace's tiling
+# layout keeps it split side-by-side with whatever else lives there.
+# NOTE: this key must stay above any [table] header below -- TOML attributes
+# bare keys to whichever table header preceded them, not to indentation.
+on-window-detected = [
+    { if = 'test %{app-bundle-id} = md.obsidian',               run = 'move-node-to-workspace 1' },
+    { if = 'test %{app-bundle-id} = com.tinyspeck.slackmacgap', run = 'move-node-to-workspace 1' },
+    { if = 'test %{app-bundle-id} = com.microsoft.VSCode',      run = 'move-node-to-workspace 2' },
+]
+
+# --- Workspace <-> monitor pinning ---
+# Assumes exactly two displays: built-in (main) + one external (secondary).
+# On a laptop-only machine 'secondary' simply has no effect.
+[workspace-to-monitor-force-assignment]
+    1 = 'main'       # laptop screen -> workspace 1 (Obsidian + Slack)
+    2 = 'secondary'  # external monitor -> workspace 2 (VS Code + paired Safari window)
+
+# --- Keyboard shortcuts ---
+[mode.main.binding]
+    alt-1 = 'workspace 1'
+    alt-2 = 'workspace 2'
+    alt-shift-1 = 'move-node-to-workspace 1'
+    alt-shift-2 = 'move-node-to-workspace 2'
+    alt-h = 'focus left'
+    alt-l = 'focus right'
+    alt-shift-h = 'move left'
+    alt-shift-l = 'move right'
+    alt-slash = 'layout tiles horizontal vertical'
+    alt-shift-space = 'layout floating tiling'  # toggle a window out of tiling if it misbehaves
